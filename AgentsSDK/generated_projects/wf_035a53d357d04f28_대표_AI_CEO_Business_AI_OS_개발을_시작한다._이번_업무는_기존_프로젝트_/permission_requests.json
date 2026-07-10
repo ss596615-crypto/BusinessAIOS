@@ -1,0 +1,17 @@
+{
+  "workflow_id": "wf_035a53d357d04f28",
+  "requests": [
+    {
+      "service": "GitHub",
+      "reason": "최신 프로젝트 검색, 저장소 비교, 커밋/푸시 수행에 외부 저장소 권한이 필요함",
+      "requested_scope": "Repository read/write access, commit history access, push permission",
+      "resume_action": "최신 프로젝트를 조회하고 변경사항을 커밋한 뒤 대표 승인 후 push 진행"
+    },
+    {
+      "service": "Git",
+      "reason": "로컬 변경사항을 원격 저장소에 반영하려면 커밋 및 푸시 권한이 필요함",
+      "requested_scope": "local commit and remote push access",
+      "resume_action": "수정 완료 후 커밋 생성 및 승인 절차 반영, 승인 시 원격 push 실행"
+    }
+  ]
+}

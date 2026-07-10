@@ -1,0 +1,23 @@
+{
+  "workflow_id": "wf_4ea495387395407b",
+  "worker_agent_id": "worker_ba1f441680",
+  "worker_role": "워크플로우 검증 운영담당",
+  "manager_agent_id": "manager_workflow_ops_d9832f6b",
+  "status": "waiting_permission",
+  "work_summary": "현재 대시보드/워크플로우 실제 데이터 조회 및 상태 변경에 필요한 외부 시스템 접근 권한이 없어, 진행 중 4개 워크플로우의 실데이터 검증과 completed 반영을 수행하지 못했습니다.",
+  "result_summary": "권한 연결 후 진행 중 워크플로우 조회, 완료 조건 검증, 상태 정정, 대시보드 갱신 확인까지 즉시 재개해야 합니다.",
+  "saved_files": [],
+  "permission_requests": [
+    {
+      "service": "Business AI OS Dashboard / Workflow datastore",
+      "reason": "현재 '진행 중 4개'에 해당하는 워크플로우 목록과 상태, 진행률, 마지막 업데이트 시간, 완료 조건 충족 여부를 실데이터로 조회하고, 완료된 항목의 상태를 completed로 변경해야 함.",
+      "requested_scope": "진행 중 워크플로우 조회(read), 상태 수정(update), 대시보드 갱신 확인(read) 권한",
+      "resume_action": "진행 중으로 집계된 모든 Workflow를 조회해 검증표를 작성하고, 완료 조건 충족 항목을 completed로 변경한 뒤 대시보드 반영 여부를 확인"
+    }
+  ],
+  "next_action": "지점장 권한 연결 후 워크플로우 조회·검증·상태 정정·대시보드 확인을 재개",
+  "limitations": [
+    "실제 대시보드/워크플로우 시스템 접근 권한이 없음",
+    "현재는 실데이터 조회 및 상태 변경을 수행할 수 없음"
+  ]
+}

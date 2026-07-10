@@ -1,0 +1,11 @@
+{
+  "workflow_id": "wf_4ea495387395407b",
+  "requests": [
+    {
+      "service": "Business AI OS Dashboard / Workflow datastore",
+      "reason": "현재 '진행 중 4개'에 해당하는 워크플로우 목록과 상태, 진행률, 마지막 업데이트 시간, 완료 조건 충족 여부를 실데이터로 조회하고, 완료된 항목의 상태를 completed로 변경해야 함.",
+      "requested_scope": "진행 중 워크플로우 조회(read), 상태 수정(update), 대시보드 갱신 확인(read) 권한",
+      "resume_action": "진행 중으로 집계된 모든 Workflow를 조회해 검증표를 작성하고, 완료 조건 충족 항목을 completed로 변경한 뒤 대시보드 반영 여부를 확인"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "workflow_id": "wf_adcabfab2b5c4bea",
+  "requests": [
+    {
+      "service": "GitHub",
+      "reason": "최신 프로젝트 검색, 원격 저장소 비교, 커밋/푸시 수행에 GitHub 접근 권한이 필요함",
+      "requested_scope": "Repository read/write, commit, push, branch status 조회",
+      "resume_action": "최신 리포지토리 비교 후 실제 코드 수정과 Git Commit/Git Push 수행"
+    }
+  ]
+}

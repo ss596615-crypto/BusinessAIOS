@@ -1,0 +1,17 @@
+{
+  "workflow_id": "wf_e8c86051f18a46c8",
+  "requests": [
+    {
+      "service": "Project Repository / Local Workspace",
+      "reason": "기존 Business AI OS 코드베이스를 검색하고 CEO/Workflow/Dashboard/Worker 관련 Python 파일을 분석한 뒤 Development Engine을 실제로 수정해야 합니다.",
+      "requested_scope": "프로젝트 작업 디렉터리 읽기/쓰기 권한 및 파일 목록 접근",
+      "resume_action": "기존 프로젝트 구조를 탐색하고 관련 파일을 수정한 뒤 자동 테스트를 실행합니다."
+    },
+    {
+      "service": "GitHub",
+      "reason": "대표 요구사항에 따라 최신 프로젝트 검색 및 Git Commit/Git Push 준비가 필요합니다.",
+      "requested_scope": "GitHub 저장소 읽기/쓰기 권한, 브랜치 생성, 커밋 생성, 푸시 권한",
+      "resume_action": "최신 코드 비교 후 변경사항을 커밋하고 대표 승인 대기 상태로 정리한 뒤 푸시를 준비합니다."
+    }
+  ]
+}

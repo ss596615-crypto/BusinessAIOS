@@ -1,0 +1,29 @@
+{
+  "workflow_id": "wf_a36cf1d14b574896",
+  "worker_agent_id": "worker_f4aaeab385",
+  "worker_role": "백엔드 워크플로우 상태 연동 담당",
+  "manager_agent_id": "manager_admin_system_8043d728",
+  "status": "waiting_permission",
+  "work_summary": "현재 대시보드-워크플로우 상태 동기화 수정 작업을 수행하려 했으나, 실제 코드/DB/API 자산에 대한 접근 정보가 제공되지 않아 기존 회사 자산(Workflow 상태 관리 로직, 상태 조회 함수, Dashboard 연결 API)을 확인할 수 없었습니다. 따라서 구현·테스트를 완료할 수 있는 상태가 아닙니다.",
+  "result_summary": "진행 중 Workflow 자동 표시, 완료 시 자동 제거, 신규 진행 중 Workflow 자동 교체 규칙을 적용하려면 현재 저장소/코드베이스 또는 API 접근 권한이 필요합니다.",
+  "saved_files": [],
+  "permission_requests": [
+    {
+      "service": "GitHub / Source Repository",
+      "reason": "Dashboard와 Workflow 상태 동기화 로직을 실제로 수정하려면 기존 프론트엔드/백엔드 소스와 상태 관리 코드를 확인해야 합니다.",
+      "requested_scope": "프로젝트 저장소 read/write 접근",
+      "resume_action": "현재 Dashboard의 Workflow 조회/표시 로직을 찾아 최소 수정 후 동작 검증"
+    },
+    {
+      "service": "Database / Backend API",
+      "reason": "진행 중 Workflow 1건 조회, 완료 제외, 최신 진행 항목 우선 교체 규칙을 실제 데이터 기준으로 검증해야 합니다.",
+      "requested_scope": "Workflow 상태 조회 및 수정 가능한 테스트/운영 API 또는 DB read/write 접근",
+      "resume_action": "진행 중 상태 조회 규칙을 확인하고 완료/교체 시나리오를 테스트"
+    }
+  ],
+  "next_action": "저장소 또는 API 접근 권한 승인 후 기존 상태 관리 로직을 수정하고 테스트를 재개",
+  "limitations": [
+    "현재 코드베이스와 실행 환경에 접근할 수 없어 실제 파일 생성/수정 및 테스트를 수행하지 못함",
+    "외부 서비스 연결 없이 완료 가능한 범위를 넘어서므로 권한 승인 전에는 진행 불가"
+  ]
+}

@@ -503,6 +503,33 @@
       "created_reason": "지점장 자동 업무 분석 및 직원 위임",
       "created_at": "2026-07-10T10:42:26.040998+00:00",
       "updated_at": "2026-07-10T10:42:26.040998+00:00"
+    },
+    {
+      "source_agent_id": "ceo_001",
+      "target_agent_id": "manager_admin_dashboard_39df60ca",
+      "description": "대표 지시는 단순 안내 페이지 제작이 아니라 승인/반려/워크플로우 상태를 제어하는 운영 시스템의 실제 오류 수정이다. 문제의 본질은 화면 노출 조건과 상태 관리 로직, 테스트, 커밋까지 포함한 운영 기능 안정화이므로 소개 홈페이지나 랜딩페이지가 아니다. 따라서 업무를 실제로 분석하고 코드 수정과 검증을 총괄할 수 있는 워크플로우 UI/상태 수정 지점장이 필요하다.",
+      "status": "active",
+      "created_reason": "AI CEO 자동 업무 분석 및 지점장 위임",
+      "created_at": "2026-07-10T23:54:09.262725+00:00",
+      "updated_at": "2026-07-10T23:54:09.262725+00:00"
+    },
+    {
+      "source_agent_id": "manager_admin_dashboard_39df60ca",
+      "target_agent_id": "worker_63d47e9137",
+      "description": "Workflow 목록/상세 화면에서 승인 완료 상태일 때 승인·반려 버튼이 숨겨지도록 렌더링 조건과 상태 판정 로직을 수정하고, 필요한 UI/상태 연동 파일을 변경한다.",
+      "status": "active",
+      "created_reason": "지점장 자동 업무 분석 및 직원 위임",
+      "created_at": "2026-07-10T23:54:15.073196+00:00",
+      "updated_at": "2026-07-10T23:54:15.073196+00:00"
+    },
+    {
+      "source_agent_id": "manager_admin_dashboard_39df60ca",
+      "target_agent_id": "worker_aa2c38c4aa",
+      "description": "버튼 노출 조건에 대한 단위/컴포넌트/통합 테스트를 보강하고 자동 테스트를 실행해 통과 여부를 검증한다.",
+      "status": "active",
+      "created_reason": "지점장 자동 업무 분석 및 직원 위임",
+      "created_at": "2026-07-10T23:54:15.098851+00:00",
+      "updated_at": "2026-07-10T23:54:15.098851+00:00"
     }
   ]
 }

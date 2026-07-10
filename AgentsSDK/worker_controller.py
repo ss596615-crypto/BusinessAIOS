@@ -196,6 +196,14 @@ class WorkerController:
                 workflow_id
             )
 
+        # 개발 업무는 일반 결과물 생성이 아니라 실제 저장소 수정 엔진으로 실행한다.
+        from development_engine import development_engine
+        if development_engine.is_development_workflow(workflow):
+            return development_engine.execute(
+                workflow=workflow,
+                worker_agent_id=worker_agent_id,
+            )
+
         worker_record = self.registry.get_agent_by_id(
             worker_agent_id
         )

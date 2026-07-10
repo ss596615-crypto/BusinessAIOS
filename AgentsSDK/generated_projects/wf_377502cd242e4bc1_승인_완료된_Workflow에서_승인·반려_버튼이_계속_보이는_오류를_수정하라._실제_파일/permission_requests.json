@@ -1,0 +1,11 @@
+{
+  "workflow_id": "wf_377502cd242e4bc1",
+  "requests": [
+    {
+      "service": "Local Repository / Workspace",
+      "reason": "실제 소스 파일을 검색·수정하고 자동 테스트를 실행한 뒤 Git commit을 생성하려면 작업 레포지토리 접근이 필요합니다.",
+      "requested_scope": "프로젝트 소스 전체 읽기/쓰기, 테스트 실행, git status/commit 권한",
+      "resume_action": "버튼 노출 조건이 있는 컴포넌트/상태 로직을 수정하고 관련 자동 테스트를 추가·실행한 뒤 커밋 생성"
+    }
+  ]
+}

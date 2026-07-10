@@ -1217,12 +1217,33 @@ class WorkflowManager:
 
         self._move_to_next_step(workflow_id)
 
-        if auto_resume:
+        # 개발 Workflow는 대표 승인 후에만 ai-ceo-dev 브랜치로 push한다.
+        push_result = None
+        try:
+            from development_engine import development_engine
+            push_result = development_engine.push_after_approval(workflow_id)
+        except Exception as exc:
+            self._set_workflow_fields(
+                workflow_id,
+                {
+                    "status": "failed",
+                    "failure_reason": f"대표 승인 후 Git push 실패: {exc}",
+                    "next_action": "GitHub 인증과 ai-ceo-dev 브랜치를 확인한 뒤 재실행하십시오.",
+                    "updated_at": self._utc_now(),
+                },
+            )
             return {
                 "approved": True,
-                "workflow": self.run_workflow(
-                    workflow_id
-                )["workflow"],
+                "push_result": {"pushed": False, "error": str(exc)},
+                "workflow": self.require_workflow(workflow_id),
+            }
+
+        if auto_resume:
+            resumed = self.run_workflow(workflow_id)
+            return {
+                "approved": True,
+                "push_result": push_result,
+                "workflow": resumed["workflow"],
             }
 
         self._set_workflow_status(
