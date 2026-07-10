@@ -1,0 +1,44 @@
+# 환경변수와 API 키
+.env
+.env.*
+
+# Google OAuth 인증 파일
+credentials.json
+**/credentials.json
+client_secret*.json
+**/client_secret*.json
+token*.json
+**/token*.json
+*.pickle
+**/*.pickle
+
+# Python 임시 파일
+__pycache__/
+**/__pycache__/
+*.pyc
+
+# 로컬 백업과 로그
+backup/
+백업/
+08_Logs/
+*.log
+
+# 압축·백업 파일
+*.zip
+BusinessAIOS.zip
+backup/
+백업/
+*_old.py
+*.old.py
+
+# 모든 인증정보
+.env
+.env.*
+credentials.json
+**/credentials.json
+client_secret*.json
+**/client_secret*.json
+token*
+**/token*
+*.pickle
+**/*.pickle

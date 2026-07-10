@@ -2,19 +2,17 @@ from core.asset_manager import AssetManager
 from core.employee_manager import EmployeeManager
 from core.report_manager import ReportManager
 from core.approval_manager import ApprovalManager
-from core.workflow import WorkflowManager
+from core.ai_brain import AIBrain
 
 
 class AICEO:
 
     def __init__(self):
-
         self.assets = AssetManager()
         self.employees = EmployeeManager()
         self.reports = ReportManager()
         self.approvals = ApprovalManager()
-        self.workflow = WorkflowManager()
-
+        self.brain = AIBrain()
 
     def start(self):
 
@@ -28,49 +26,44 @@ class AICEO:
             command = input("\n대표 > ")
 
             if command in ["exit", "종료"]:
-                break
+                print("AI CEO 종료")
+                return
 
-            # 1. 회사 자산 검색
-            self.assets.scan()
+            assets = self.assets.search(command)
 
-            # 2. 업무 분석
-            analysis = self.workflow.analyze(command)
+            analysis = self.brain.analyze(command, assets)
 
-            # 3. AI 직원 배정
+            approval = self.approvals.check(command)
+
             employee_result = self.employees.assign(command)
 
-            # 4. 결과 취합
             result = f"""
+
+[AI CEO 판단]
+
 {analysis}
 
+
+[기존 회사 자산]
+
+{assets if assets else "관련 자료 없음"}
+
+
+[승인 상태]
+
+{approval}
+
+
+[AI 직원 결과]
+
 {employee_result}
+
 """
 
-            # 5. 운영보고 저장
             self.reports.create_operation_report(
                 command,
                 result
             )
 
             print("\nAI CEO 실행 결과")
-            print(result)
-        print("===================================")
-
-        while True:
-
-            command = input("\n대표 > ")
-
-            if command in ["exit", "종료"]:
-                break
-
-            self.assets.scan()
-
-            result = self.workflow.analyze(command)
-
-            self.reports.create_operation_report(
-                command,
-                result
-            )
-
-            print("\nAI CEO 분석 완료")
             print(result)

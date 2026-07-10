@@ -1,0 +1,11 @@
+{
+  "workflow_id": "wf_9607de984b6b4393",
+  "requests": [
+    {
+      "service": "Local Project Workspace / Git Repository",
+      "reason": "AI CEO Dashboard에서 '현재 Worker 수' 기능 구현 여부를 검증하고, 수정 파일·함수·Git 변경 내역·화면 전후 비교·코드 위치를 실제로 수집해야 합니다. 현재는 프로젝트 파일과 저장소에 접근할 수 없어 검증을 진행할 수 없습니다.",
+      "requested_scope": "작업 디렉터리 읽기/쓰기, Git status/log/diff 확인, 관련 Python/UI 파일 열람, 필요 시 테스트 실행",
+      "resume_action": "저장소 접근 후 대시보드 관련 파일을 검색하고, Worker 수 표시 코드 위치와 변경 이력을 확인한 뒤 최종 보고서를 작성"
+    }
+  ]
+}

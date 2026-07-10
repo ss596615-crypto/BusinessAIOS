@@ -1,0 +1,18 @@
+{
+  "workflow_id": "wf_36302eb5b2904640",
+  "worker_agent_id": "worker_6b7a84cf73",
+  "worker_role": "기존 자산 조사 담당자",
+  "manager_agent_id": "manager_admin_dashboard_01deecad",
+  "status": "completed",
+  "work_summary": "기존 자산 관점에서 현재 Worker 수 표시 기능을 위해 필요한 조사/정의 항목을 정리했다. 재사용 대상은 대시보드 요약 영역, Worker 현황 데이터, 필터/상세 화면, 갱신 상태 자산이며, Worker 수 정의 후보(재직 중/활성/로그인 중)를 비교해 데이터로 정의 가능한지 검토한 보고서를 작성했다.",
+  "result_summary": "현재 Worker 수는 우선 '활성 Worker 수'로 정의하는 것이 가장 재현 가능하며, 추가로 재직 중/로그인 중은 별도 상태 필드 또는 세션 데이터가 있을 때 확장 가능하다는 결론이다. 구현은 기존 대시보드 요약 카드에 Worker 수를 노출하고, 현재 보유 데이터 소스에 맞춰 집계 기준을 확정한 뒤 연결하면 된다.",
+  "saved_files": [
+    "reports\\current_worker_count_asset_review.md"
+  ],
+  "permission_requests": [],
+  "next_action": "대시보드 워커 수 구현 담당자가 기존 데이터 소스에 맞춰 집계 API 또는 상태 계산 로직을 연결하고, 검증 담당자가 표시/갱신/필터 연동을 확인한다.",
+  "limitations": [
+    "실제 저장소/대시보드 파일에는 직접 접근할 수 없어 코드 수준 수정은 수행하지 못함.",
+    "기존 시스템의 실제 데이터 스키마와 화면 구조는 제공되지 않아 조사 결과는 일반화된 재사용 관점으로 작성함."
+  ]
+}

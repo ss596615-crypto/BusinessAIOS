@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Business AI OS 운영 홈페이지</title>
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <div class="eyebrow">Business AI OS</div>
+      <h1>운영 홈페이지 / 관리자 대시보드</h1>
+      <p>대표 지시, 승인 흐름, 워크플로우, 권한 요청, 운영보고를 한 화면에서 관리</p>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn primary" id="btnRefresh">상태 새로고침</button>
+      <button class="btn" id="btnSampleReport">샘플 보고서 생성</button>
+    </div>
+  </header>
+
+  <main class="grid">
+    <section class="card hero">
+      <div class="card-title">프로젝트 현황</div>
+      <div class="hero-grid">
+        <div class="metric">
+          <span>진행률</span>
+          <strong id="projectProgress">82%</strong>
+        </div>
+        <div class="metric">
+          <span>대기 승인</span>
+          <strong id="pendingApprovals">3</strong>
+        </div>
+        <div class="metric">
+          <span>권한 요청</span>
+          <strong id="permissionCount">1</strong>
+        </div>
+        <div class="metric">
+          <span>완료 결과물</span>
+          <strong id="deliverablesCount">5</strong>
+        </div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>출시 준비도</span><span id="progressText">배포 전 검수 단계</span></div>
+        <div class="progress-bar"><div id="progressBar" class="progress-fill"></div></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-title">대표 지시 / 승인 흐름</div>
+      <div id="directiveList" class="list"></div>
+    </section>
+
+    <section class="card">
+      <div class="card-title">워크플로우 진행 상태</div>
+      <div id="workflowList" class="list"></div>
+    </section>
+
+    <section class="card">
+      <div class="card-title">지점장 / 직원 현황</div>
+      <div id="staffList" class="list"></div>
+    </section>
+
+    <section class="card">
+      <div class="card-title">권한 요청</div>
+      <div id="permissionList" class="list"></div>
+    </section>
+
+    <section class="card wide">
+      <div class="card-title">운영보고 / 결과물 조회</div>
+      <div id="reportList" class="report-grid"></div>
+    </section>
+  </main>
+
+  <template id="itemTemplate">
+    <div class="list-item">
+      <div>
+        <div class="item-title"></div>
+        <div class="item-sub"></div>
+      </div>
+      <div class="item-badge"></div>
+    </div>
+  </template>
+
+  <script src="assets/app.js"></script>
+</body>
+</html>

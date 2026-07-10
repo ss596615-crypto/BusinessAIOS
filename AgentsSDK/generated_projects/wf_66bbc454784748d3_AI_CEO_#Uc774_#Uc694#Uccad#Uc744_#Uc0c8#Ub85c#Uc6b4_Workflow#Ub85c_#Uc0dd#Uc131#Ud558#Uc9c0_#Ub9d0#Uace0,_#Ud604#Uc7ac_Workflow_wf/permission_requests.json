@@ -1,0 +1,23 @@
+{
+  "workflow_id": "wf_66bbc454784748d3",
+  "requests": [
+    {
+      "service": "GitHub",
+      "reason": "wf_9607de984b6b4393의 실제 수정 파일, Git diff/status, 커밋/브랜치 상태를 직접 조회해야 함",
+      "requested_scope": "저장소 읽기 권한 및 변경 이력 조회 권한",
+      "resume_action": "저장소에서 실제 수정 파일과 diff를 수집하고 검증 보고서를 작성"
+    },
+    {
+      "service": "Dashboard/Workflow System",
+      "reason": "Workflow wf_9607de984b6b4393의 현재 상태와 Dashboard의 Worker 수 표시 위치/값을 확인해야 함",
+      "requested_scope": "워크플로우 상태 조회 및 대시보드 읽기 권한",
+      "resume_action": "Workflow 상태, Worker 수 위치와 현재 값을 수집해 보고"
+    },
+    {
+      "service": "Execution Logs/CI",
+      "reason": "실행한 테스트 명령과 출력 결과를 확인해야 함",
+      "requested_scope": "테스트 실행 로그 읽기 권한",
+      "resume_action": "테스트 명령/출력 증거를 수집해 보고"
+    }
+  ]
+}

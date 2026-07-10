@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Business AI OS 운영 홈페이지 - 운영 현황, 가이드, 공지, FAQ를 한 곳에서 확인하는 공식 포털" />
+  <title>Business AI OS 운영 홈페이지</title>
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <div>
+        <p class="eyebrow">Business AI OS</p>
+        <h1>운영 홈페이지</h1>
+        <p class="lead">운영 현황, 가이드, 공지, 문의를 한 곳에 모은 공식 포털입니다.</p>
+      </div>
+      <div class="header-badges">
+        <span class="badge success">운영중</span>
+        <span class="badge">Version 1.0</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="section hero">
+      <div class="container grid-2">
+        <div>
+          <h2>업무를 빠르게 시작하고, 안정적으로 운영하세요</h2>
+          <p>Business AI OS의 핵심 운영 정보와 도입 가이드를 제공하는 홈페이지입니다. 지점, 운영 담당자, 협업 인력이 바로 참고할 수 있도록 구성했습니다.</p>
+          <div class="cta-row">
+            <a class="btn primary" href="#guide">운영 가이드 보기</a>
+            <a class="btn secondary" href="#contact">문의하기</a>
+          </div>
+        </div>
+        <div class="panel stats-panel">
+          <h3>운영 요약</h3>
+          <ul class="stats">
+            <li><strong>서비스 상태</strong><span>정상</span></li>
+            <li><strong>공지</strong><span>초기 출시본 공개</span></li>
+            <li><strong>문의 채널</strong><span>지점장 승인 후 연동 가능</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="about">
+      <div class="container">
+        <h2>홈페이지 소개</h2>
+        <div class="cards">
+          <article class="card">
+            <h3>운영 통합</h3>
+            <p>공지, 가이드, FAQ, 문의를 통합해 운영 커뮤니케이션 비용을 줄입니다.</p>
+          </article>
+          <article class="card">
+            <h3>즉시 확인</h3>
+            <p>반응형 구조로 데스크톱과 모바일에서 모두 빠르게 확인할 수 있습니다.</p>
+          </article>
+          <article class="card">
+            <h3>확장 가능</h3>
+            <p>추후 로그인, 관리자 페이지, 배포 연동, 공지 API를 쉽게 추가할 수 있습니다.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section alt" id="guide">
+      <div class="container">
+        <h2>운영 가이드</h2>
+        <div class="guide-list">
+          <div class="guide-item"><span>1</span><p>공지사항과 운영 변경 사항은 이 페이지의 공지 섹션에 우선 반영합니다.</p></div>
+          <div class="guide-item"><span>2</span><p>배포 전에는 검수 체크리스트를 통해 문구, 링크, 문의 채널을 확인합니다.</p></div>
+          <div class="guide-item"><span>3</span><p>외부 서비스 연동이 필요한 경우 지점장 승인 후 연결합니다.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="faq">
+      <div class="container">
+        <h2>FAQ</h2>
+        <div class="faq-list">
+          <button class="faq-item" aria-expanded="false">
+            <span>Q. 배포는 완료되었나요?</span><strong>+</strong>
+          </button>
+          <div class="faq-panel">A. 현재는 외부 배포 계정 연결 없이 로컬 실행 가능한 초기 출시본입니다. 실제 배포는 권한 연결 후 진행합니다.</div>
+
+          <button class="faq-item" aria-expanded="false">
+            <span>Q. 관리자 기능은 있나요?</span><strong>+</strong>
+          </button>
+          <div class="faq-panel">A. 초기 버전에는 포함하지 않았습니다. 추후 계정/백엔드 연동 시 확장 가능합니다.</div>
+
+          <button class="faq-item" aria-expanded="false">
+            <span>Q. 문의는 어디로 하나요?</span><strong>+</strong>
+          </button>
+          <div class="faq-panel">A. 현재는 내부 승인 후 문의 채널을 연결하는 구조입니다. 연동 권한 확보 후 안내를 갱신하세요.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section alt" id="contact">
+      <div class="container contact-grid">
+        <div>
+          <h2>문의 / 공지 연동</h2>
+          <p>외부 도구(Google Drive, GitHub, 배포 플랫폼, 메시징 연동)가 승인되면 해당 채널로 자동 연결할 수 있습니다.</p>
+        </div>
+        <div class="panel">
+          <h3>현재 상태</h3>
+          <p>외부 계정 권한 미연결로 인해 폼/자동화는 비활성 상태입니다.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p>© <span id="year"></span> Business AI OS</p>
+      <p>운영 홈페이지</p>
+    </div>
+  </footer>
+
+  <script src="assets/app.js"></script>
+</body>
+</html>

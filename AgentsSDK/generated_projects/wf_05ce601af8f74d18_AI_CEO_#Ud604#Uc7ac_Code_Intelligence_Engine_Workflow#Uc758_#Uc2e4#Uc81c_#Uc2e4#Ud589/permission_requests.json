@@ -1,0 +1,17 @@
+{
+  "workflow_id": "wf_05ce601af8f74d18",
+  "requests": [
+    {
+      "service": "Project Repository / File System",
+      "reason": "프로젝트의 실제 코드베이스를 검색·수정하고 생성 파일 및 기존 파일 변경 여부를 검증하려면 리포지토리 접근 권한이 필요합니다.",
+      "requested_scope": "워크플로우 프로젝트 전체 읽기/쓰기 권한",
+      "resume_action": "프로젝트 검색, 코드 수정, 자동 테스트 실행, 수정 이력 검증을 재개합니다."
+    },
+    {
+      "service": "Dashboard / Operational Records",
+      "reason": "대시보드 업데이트 결과와 회사 자산·운영기록 변경을 실제로 반영하고 검증하려면 관련 저장소/계정 권한이 필요합니다.",
+      "requested_scope": "운영대시보드 및 운영기록 저장소 읽기/쓰기 권한",
+      "resume_action": "대시보드 상태 확인, 운영기록 반영, 최종 보고서 저장을 재개합니다."
+    }
+  ]
+}

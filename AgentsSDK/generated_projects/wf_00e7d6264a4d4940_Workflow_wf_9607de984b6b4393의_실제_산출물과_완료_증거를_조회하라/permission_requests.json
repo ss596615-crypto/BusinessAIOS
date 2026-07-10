@@ -1,0 +1,11 @@
+{
+  "workflow_id": "wf_00e7d6264a4d4940",
+  "requests": [
+    {
+      "service": "Workflow 기록 저장소/내부 문서 시스템",
+      "reason": "기존 Workflow wf_9607de984b6b4393의 실제 산출물, 첨부, 로그, 승인 이력을 조회해 완료 증거를 대조해야 하지만 현재 접근 권한이 없어 검증을 진행할 수 없습니다.",
+      "requested_scope": "Workflow wf_9607de984b6b4393 관련 문서, 첨부파일, 실행 로그, 승인 이력의 읽기 전용 접근",
+      "resume_action": "권한 승인 후 해당 Workflow의 산출물 위치와 증거를 대조해 완료 여부를 판정하고 지점장에게 보고합니다."
+    }
+  ]
+}

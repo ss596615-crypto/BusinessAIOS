@@ -1,0 +1,28 @@
+remote: error: GH013: Repository rule violations found for refs/heads/main.        
+remote: 
+remote: - GITHUB PUSH PROTECTION        
+remote:   —————————————————————————————————————————        
+remote:     Resolve the following violations before pushing again        
+remote: 
+remote:     - Push cannot contain secrets        
+remote: 
+remote:             
+remote:      (?) Learn how to resolve a blocked push        
+remote:      https://docs.github.com/code-security/secret-scanning/working-with-secret-scanning-and-push-protection/working-with-push-protection-from-the-command-line#resolving-a-blocked-push        
+remote:             
+remote:             
+remote:       —— OpenAI API Key ————————————————————————————————————        
+remote:        locations:        
+remote:          - commit: 1f842ece5915fcec8b051ed7e941ed43da36615e        
+remote:            path: 01_AI_CEO/04_Reports/20260708_094410_AI_CEO_Report.md:7        
+remote:          - commit: 1f842ece5915fcec8b051ed7e941ed43da36615e        
+remote:            path: 01_AI_CEO/04_Reports/20260708_094434_AI_CEO_Report.md:7        
+remote:             
+remote:        (?) To push, remove secret from commit(s) or follow this URL to allow the secret.        
+remote:        https://github.com/ss596615-crypto/BusinessAIOS/security/secret-scanning/unblock-secret/3GKbR4TqNQzbVjSbFnVpwZDG7m4        
+remote:             
+remote: 
+remote: 
+To https://github.com/ss596615-crypto/BusinessAIOS.git
+ ! [remote rejected] main -> main (push declined due to repository rule violations)
+error: failed to push some refs to 'https://github.com/ss596615-crypto/BusinessAIOS.git'

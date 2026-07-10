@@ -1,0 +1,18 @@
+{
+  "workflow_id": "wf_02b2ce8c92f041cb",
+  "worker_agent_id": "worker_974c9fafeb",
+  "worker_role": "운영 시스템 구현 담당",
+  "manager_agent_id": "manager_workflow_ops_d9832f6b",
+  "status": "completed",
+  "work_summary": "대표 지시를 기반으로 신규 공통 운영 원칙을 문서화하고, Business AI OS 전반에 적용할 수 있는 실행 규칙/판단 흐름/승인 기준/자산 재사용 원칙을 정리한 운영 보고서를 작성했다. 외부 서비스 연결이나 권한 승인 없이 수행 가능한 범위에서 완료했다.",
+  "result_summary": "AI CEO 기본 운영 원칙(지시 해석→프로젝트/기능/오류/재사용 판별→직원/권한 자동 판단→승인 시 보고→진행 재개)을 공통 규칙으로 확정하는 보고서를 생성했다.",
+  "saved_files": [
+    "reports\\ai_ceo_default_operating_principle.md"
+  ],
+  "permission_requests": [],
+  "next_action": "지점장에게 보고 후, 해당 운영 원칙을 실제 시스템 화면/상태 흐름에 반영하는 후속 구현을 진행한다.",
+  "limitations": [
+    "현재 결과물은 문서 보고서 형태로 완성했다.",
+    "기존 시스템 소스 코드/화면 파일이 제공되지 않아 직접 코드 수정은 수행하지 못했다."
+  ]
+}

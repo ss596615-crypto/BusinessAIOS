@@ -5,12 +5,11 @@ from datetime import datetime
 class ReportManager:
 
     def __init__(self):
-        self.root = Path(r"C:\BusinessAIOS")
 
         self.folder = (
-            self.root /
-            "01_AI_CEO" /
-            "04_Reports"
+            Path(r"C:\BusinessAIOS")
+            / "01_AI_CEO"
+            / "04_Reports"
         )
 
         self.folder.mkdir(
@@ -21,33 +20,56 @@ class ReportManager:
 
     def create_operation_report(self, instruction, analysis):
 
-        content = f"""
+        report = f"""
 # AI CEO 운영보고서
 
-## 대표 지시
+
+## 1. 대표 지시
+
 {instruction}
 
-## 분석 결과
+
+## 2. 업무 분석
+
 {analysis}
 
-## 상태
-업무 분석 완료
 
-## 다음 업무
-실행 계획 수립
+## 3. 실행 결과
+
+{analysis}
+
+
+## 4. 현재 판단
+
+기존 회사 자산을 우선 검토하고
+필요한 AI 직원을 활용하여 업무를 수행함.
+
+
+## 5. 대표 승인 필요사항
+
+추가 비용 발생,
+외부 계약,
+신규 자동화 구축 시 승인 필요.
+
+
+## 6. 다음 수행 업무
+
+업무 결과 검토 후 다음 실행 단계 진행.
 """
+
 
         filename = (
             datetime.now()
             .strftime("%Y%m%d_%H%M%S")
-            + "_operation_report.md"
+            + "_AI_CEO_Report.md"
         )
+
 
         file = self.folder / filename
 
         file.write_text(
-            content,
+            report,
             encoding="utf-8"
         )
 
-        return content
+        return report

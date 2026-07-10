@@ -1,41 +1,73 @@
 from pathlib import Path
-import json
+
+from config.google_drive import connect_drive
 
 
 class AssetManager:
 
     def __init__(self):
         self.root = Path(r"C:\BusinessAIOS")
-        self.asset_file = (
-            self.root /
-            "00_Company" /
-            "04_Company_Assets" /
-            "assets.json"
-        )
-
 
     def scan(self):
 
-        self.asset_file.parent.mkdir(
-            parents=True,
-            exist_ok=True
-        )
-
         assets = []
 
-        for item in self.root.rglob("*"):
-            if item.is_file():
+        # ------------------------
+        # Local
+        # ------------------------
+
+        if self.root.exists():
+
+            for item in self.root.rglob("*"):
+
+                if item.is_file():
+
+                    assets.append(
+                        f"[LOCAL] {item.relative_to(self.root)}"
+                    )
+
+        # ------------------------
+        # Google Drive
+        # ------------------------
+
+        try:
+
+            service = connect_drive()
+
+            results = service.files().list(
+                pageSize=100,
+                fields="files(id,name,mimeType)"
+            ).execute()
+
+            files = results.get("files", [])
+
+            for file in files:
+
                 assets.append(
-                    str(item.relative_to(self.root))
+                    f"[DRIVE] {file['name']}"
                 )
 
-        self.asset_file.write_text(
-            json.dumps(
-                assets,
-                ensure_ascii=False,
-                indent=2
-            ),
-            encoding="utf-8"
-        )
+        except Exception as e:
+
+            assets.append(
+                f"[Google Drive 오류] {e}"
+            )
 
         return assets
+
+    def search(self, keyword=""):
+
+        assets = self.scan()
+
+        if keyword == "":
+            return assets
+
+        results = []
+
+        for asset in assets:
+
+            if keyword.lower() in asset.lower():
+
+                results.append(asset)
+
+        return results

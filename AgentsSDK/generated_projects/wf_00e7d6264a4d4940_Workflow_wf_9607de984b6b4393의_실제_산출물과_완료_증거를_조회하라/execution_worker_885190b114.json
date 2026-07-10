@@ -1,0 +1,24 @@
+{
+  "workflow_id": "wf_00e7d6264a4d4940",
+  "worker_agent_id": "worker_885190b114",
+  "worker_role": "Workflow 검증 담당자",
+  "manager_agent_id": "manager_workflow_ops_8ca14f2a",
+  "status": "waiting_permission",
+  "work_summary": "기존 회사 메모리에서 요청된 Workflow wf_9607de984b6b4393의 검증 지시를 확인했으나, 현재 대화 내에는 해당 Workflow의 실제 산출물/로그/승인 이력/첨부를 조회할 수 있는 저장소 접근 수단이 없습니다. 신규 Workflow 생성 없이 기존 기록을 직접 대조해야 하나, 원본 기록 접근이 불가합니다.",
+  "result_summary": "Workflow wf_9607de984b6b4393의 실제 산출물과 완료 증거를 조회하려면 기존 Workflow 저장소(예: 문서/로그/드라이브/내부 시스템) 접근 권한이 필요합니다. 현재는 검증을 완료했다고 판정할 수 없습니다.",
+  "saved_files": [],
+  "permission_requests": [
+    {
+      "service": "Workflow 기록 저장소/내부 문서 시스템",
+      "reason": "기존 Workflow wf_9607de984b6b4393의 실제 산출물, 첨부, 로그, 승인 이력을 조회해 완료 증거를 대조해야 하지만 현재 접근 권한이 없어 검증을 진행할 수 없습니다.",
+      "requested_scope": "Workflow wf_9607de984b6b4393 관련 문서, 첨부파일, 실행 로그, 승인 이력의 읽기 전용 접근",
+      "resume_action": "권한 승인 후 해당 Workflow의 산출물 위치와 증거를 대조해 완료 여부를 판정하고 지점장에게 보고합니다."
+    }
+  ],
+  "next_action": "지점장 승인 후 Workflow 저장소 접근 권한을 확보하여 기존 기록만으로 검증을 재개합니다.",
+  "limitations": [
+    "현재 대화 환경에서는 외부/내부 저장소를 직접 조회할 수 없음",
+    "신규 Workflow 생성 없이 기존 기록 검증이 요구되나 원본 기록 접근 권한이 없음",
+    "산출물 일치 여부, 누락 여부, 상태 충족 여부를 현시점에서 판정할 수 없음"
+  ]
+}
