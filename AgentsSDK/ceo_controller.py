@@ -159,6 +159,47 @@ class CEOController:
 
         self._ensure_ceo_agent()
 
+        from development_engine import development_engine
+        if development_engine.is_development_instruction(owner_instruction):
+            created = self.workflow_manager.create_workflow(
+                title=title,
+                objective=objective,
+                owner_instruction=owner_instruction,
+                ceo_agent_id=self.CEO_AGENT_ID,
+                manager_agent_id=None,
+                worker_agent_ids=[],
+                project_id=project_id,
+                requested_by="owner",
+                requires_approval=requires_approval,
+                metadata={
+                    "business_type": "development_engine",
+                    "development_mode": True,
+                    "execution_engine": "development_engine",
+                    "worker_selection_owner": "development_engine",
+                },
+            )
+            workflow_id = created["workflow"]["workflow_id"]
+            execution = self.workflow_manager.run_workflow(workflow_id)
+            workflow = execution["workflow"]
+            return {
+                "workflow_id": workflow_id,
+                "status": workflow["status"],
+                "approval_status": workflow["approval_status"],
+                "business_type": "development_engine",
+                "analysis_summary": (
+                    "개발 업무로 판정하여 일반 지점장/Worker를 우회하고 "
+                    "Development Engine을 기본 실행 엔진으로 호출했습니다."
+                ),
+                "manager": {
+                    "agent_id": "development_engine",
+                    "name": "Development_Engine",
+                    "role": "AI 개발 실행 엔진",
+                },
+                "managers": [],
+                "workers": ["development_engine"],
+                "worker_selection_owner": "development_engine",
+            }
+
         analysis = self._analyze_owner_instruction(
             title=title,
             objective=objective,

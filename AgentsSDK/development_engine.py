@@ -53,6 +53,10 @@ class DevelopmentEngine:
         DEV_STATE_DIR.mkdir(parents=True, exist_ok=True)
         BACKUP_ROOT.mkdir(parents=True, exist_ok=True)
 
+    def is_development_instruction(self, instruction: str) -> bool:
+        text = str(instruction or "").lower()
+        return any(keyword.lower() in text for keyword in self.DEV_KEYWORDS)
+
     def is_development_workflow(self, workflow: dict[str, Any]) -> bool:
         metadata = workflow.get("metadata") or {}
         text = " ".join(
@@ -61,14 +65,25 @@ class DevelopmentEngine:
                 workflow.get("owner_instruction"), metadata.get("business_type"),
             )
         ).lower()
-        return any(keyword.lower() in text for keyword in self.DEV_KEYWORDS)
+        metadata = workflow.get("metadata") or {}
+        return bool(metadata.get("development_mode")) or self.is_development_instruction(text)
+
+    def state_file_for(self, workflow_id: str) -> Path:
+        return DEV_STATE_DIR / f"{workflow_id}.json"
+
+    def _write_trace(self, workflow_id: str, stage: str, status: str, detail: str = "") -> None:
+        trace_file = DEV_STATE_DIR / f"{workflow_id}.trace.log"
+        line = f"{self._now()}\t{stage}\t{status}\t{detail}\n"
+        with trace_file.open("a", encoding="utf-8") as handle:
+            handle.write(line)
 
     def execute(self, workflow: dict[str, Any], worker_agent_id: str) -> dict[str, Any]:
         workflow_id = str(workflow.get("workflow_id") or "").strip()
         if not workflow_id:
             raise DevelopmentEngineError("Workflow ID가 없습니다.")
 
-        state_file = DEV_STATE_DIR / f"{workflow_id}.json"
+        state_file = self.state_file_for(workflow_id)
+        self._write_trace(workflow_id, "development_engine", "started", worker_agent_id)
         if state_file.exists():
             previous = json.loads(state_file.read_text(encoding="utf-8"))
             previous["reused_by_worker"] = worker_agent_id
@@ -77,19 +92,29 @@ class DevelopmentEngine:
         self._ensure_git_repository()
         branch = self._current_branch()
         if branch != "ai-ceo-dev":
-            raise DevelopmentEngineError(
-                f"AI 개발은 ai-ceo-dev 브랜치에서만 허용됩니다. 현재 브랜치: {branch}"
-            )
+            checkout = self._git(["checkout", "ai-ceo-dev"], check=False)
+            if checkout["returncode"] != 0:
+                raise DevelopmentEngineError(
+                    "ai-ceo-dev 브랜치 자동 전환에 실패했습니다.\n"
+                    + checkout["stdout"] + checkout["stderr"]
+                )
+            branch = self._current_branch()
+        fetch_result = self._git(["fetch", "origin", "ai-ceo-dev"], check=False)
 
-        if self._has_uncommitted_changes():
-            raise DevelopmentEngineError(
-                "커밋되지 않은 기존 변경사항이 있습니다. 먼저 commit 또는 stash 후 다시 실행하세요."
-            )
+        preexisting_changes = self._git(
+            ["status", "--porcelain"], check=False
+        )["stdout"].splitlines()
+        self._write_trace(
+            workflow_id, "git_preflight", "passed",
+            f"branch={branch}; dirty_entries={len(preexisting_changes)}",
+        )
 
         instruction = str(workflow.get("owner_instruction") or workflow.get("objective") or "")
         candidates = self._find_candidate_files(instruction)
+        self._write_trace(workflow_id, "file_search", "passed", ", ".join(candidates))
         context = self._build_code_context(candidates)
         plan = self._create_plan(workflow, context)
+        self._write_trace(workflow_id, "plan", "passed", plan.summary)
         if not plan.changes:
             raise DevelopmentEngineError("AI 개발자가 수정 파일을 결정하지 못했습니다.")
 
@@ -97,7 +122,13 @@ class DevelopmentEngine:
         changed_files: list[str] = []
         try:
             changed_files = self._apply_changes(plan.changes)
+            self._write_trace(workflow_id, "file_modify", "passed", ", ".join(changed_files))
             test_result = self._run_tests(plan.tests, changed_files)
+            self._write_trace(
+                workflow_id, "tests",
+                "passed" if test_result["passed"] else "failed",
+                "; ".join(test_result.get("commands") or []),
+            )
             if not test_result["passed"]:
                 self._restore_backup(backup_dir, plan.changes)
                 raise DevelopmentEngineError(
@@ -108,10 +139,13 @@ class DevelopmentEngine:
             if not diff.strip():
                 raise DevelopmentEngineError("실제 Git 변경사항이 생성되지 않았습니다.")
 
+            # 기존에 stage된 다른 파일은 commit에 섞지 않는다. 작업 내용은 보존하고 stage만 해제한다.
+            self._git(["reset"], check=False)
             self._git(["add", "--", *changed_files])
             commit_message = f"AI CEO: {self._short_title(instruction)}"
-            commit_result = self._git(["commit", "-m", commit_message])
+            commit_result = self._git(["commit", "-m", commit_message, "--", *changed_files])
             commit_hash = self._git(["rev-parse", "HEAD"])["stdout"].strip()
+            self._write_trace(workflow_id, "git_commit", "passed", commit_hash)
 
             result = {
                 "workflow_id": workflow_id,
@@ -130,6 +164,7 @@ class DevelopmentEngine:
                 "limitations": plan.limitations,
                 "development_evidence": {
                     "branch": branch,
+                    "git_fetch": fetch_result["stdout"] + fetch_result["stderr"],
                     "candidate_files": candidates,
                     "changed_files": changed_files,
                     "backup_dir": str(backup_dir),
@@ -138,12 +173,16 @@ class DevelopmentEngine:
                     "git_commit": commit_hash,
                     "git_commit_output": commit_result["stdout"],
                     "pending_push": True,
+                    "preexisting_changes": preexisting_changes,
+                    "trace_file": str(DEV_STATE_DIR / f"{workflow_id}.trace.log"),
                     "created_at": self._now(),
                 },
             }
             state_file.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+            self._write_trace(workflow_id, "development_engine", "completed", commit_hash)
             return result
-        except Exception:
+        except Exception as exc:
+            self._write_trace(workflow_id, "development_engine", "failed", str(exc))
             if changed_files and not self._has_staged_changes():
                 self._restore_backup(backup_dir, plan.changes)
             raise

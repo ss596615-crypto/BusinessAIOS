@@ -1,0 +1,12 @@
+{
+  "development_engine.py": "syntax_ok",
+  "workflow_manager.py": "syntax_ok",
+  "ceo_controller.py": "syntax_ok",
+  "worker_controller.py": "syntax_ok",
+  "ceo_meeting.py": "syntax_ok",
+  "development_step_registered": true,
+  "development_handler_exists": true,
+  "ceo_direct_route": true,
+  "trace_logging": true,
+  "scoped_commit": true
+}
