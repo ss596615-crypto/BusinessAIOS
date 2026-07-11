@@ -42,3 +42,7 @@ token*
 **/token*
 *.pickle
 **/*.pickle
+
+.devengine_backups/
+development_evidence/
+.env
