@@ -110,12 +110,6 @@ class CEOController:
     → 없으면 Agent Factory로 지점장 임명
     → CEO에서 지점장으로 Handoff 연결
     → 대표 업무를 주 담당 지점장 Workflow로 전달
-
-    중요 원칙:
-    - CEO는 직원을 직접 선발하지 않는다.
-    - 직원 검색·채용·업무 배정은 지점장의 책임이다.
-    - 제품, 홈페이지, 학원, 병원 등 업무별 고정 키워드를 사용하지 않는다.
-    - 새로운 종류의 업무도 AI CEO가 의미를 분석해 지점장을 결정한다.
     """
 
     CEO_AGENT_ID = "ceo_001"
@@ -134,10 +128,6 @@ class CEOController:
         self.handoff_manager = handoff_manager_instance or handoff_manager
         self.workflow_manager = workflow_manager_instance or workflow_manager
         self.company_memory = company_memory_instance or company_memory
-
-    # =====================================================
-    # 대표 지시 시작
-    # =====================================================
 
     def start(
         self,
@@ -174,7 +164,7 @@ class CEOController:
                 metadata={
                     "business_type": "development_engine",
                     "development_mode": True,
-                    "execution_engine": "development_engine",
+                    "execution_engine": "development_engine_v2",
                     "worker_selection_owner": "development_engine",
                 },
             )
@@ -188,7 +178,7 @@ class CEOController:
                 "business_type": "development_engine",
                 "analysis_summary": (
                     "개발 업무로 판정하여 일반 지점장/Worker를 우회하고 "
-                    "Development Engine을 기본 실행 엔진으로 호출했습니다."
+                    "Development Engine V2를 기본 실행 엔진으로 호출했습니다."
                 ),
                 "manager": {
                     "agent_id": "development_engine",
@@ -198,6 +188,8 @@ class CEOController:
                 "managers": [],
                 "workers": ["development_engine"],
                 "worker_selection_owner": "development_engine",
+                "execution_engine": "development_engine_v2",
+                "development_mode": True,
             }
 
         analysis = self._analyze_owner_instruction(
@@ -235,9 +227,6 @@ class CEOController:
         )
         primary_manager_agent = manager_agents[0]
 
-        # CEO는 직원을 직접 구성하지 않는다.
-        # worker_agent_ids는 빈 목록으로 전달하고,
-        # 실제 직원 구성은 지점장 실행 단계에서 담당한다.
         created = self.workflow_manager.create_workflow(
             title=title,
             objective=objective,
@@ -315,11 +304,10 @@ class CEOController:
             "managers": manager_results,
             "workers": [],
             "worker_selection_owner": "manager",
+            "execution_engine": "development_engine_v2"
+            if analysis.primary_business_type == "development_engine"
+            else "business_ai_os_default",
         }
-
-    # =====================================================
-    # 승인 / 반려 / 보고
-    # =====================================================
 
     def approve(
         self,
@@ -362,10 +350,6 @@ class CEOController:
             ),
         }
 
-    # =====================================================
-    # AI CEO 자동 업무 분석
-    # =====================================================
-
     def _analyze_owner_instruction(
         self,
         *,
@@ -373,55 +357,9 @@ class CEOController:
         objective: str,
         owner_instruction: str,
     ) -> CEOAnalysisResult:
-        """
-        키워드 규칙이 아니라 OpenAI Agent가 대표 지시의 의미를 분석한다.
-        """
-
         analysis_agent = Agent(
             name="Business_AI_OS_CEO_Analyzer",
-            instructions="""
-너는 Business AI OS의 AI CEO이다.
-
-대표의 지시와 목표를 분석하여 어떤 지점장이 필요한지 결정하라.
-
-반드시 지켜야 할 원칙:
-
-1. CEO는 대표의 목표를 분석하고 지점장만 임명한다.
-2. CEO가 실무 직원을 직접 선택하거나 채용하면 안 된다.
-3. 직원 구성은 각 지점장이 업무를 분석한 뒤 결정한다.
-4. 기존 조직으로 해결 가능한 일반적인 역할명을 우선 사용한다.
-5. 업무가 복합적이면 필요한 지점장을 여러 명 결정할 수 있다.
-6. 첫 번째 지점장은 전체 Workflow의 주 담당 지점장이어야 한다.
-7. 제품, 홈페이지, 병원, 학원, 정부지원, 마케팅 등
-   미리 정해진 키워드 표에 의존하지 말고 지시의 의미로 판단한다.
-8. manager_instructions에는 다음 책임을 반드시 포함한다.
-   - 업무 분석
-   - 세부 실행계획 수립
-   - 기존 회사 자산 우선 검색
-   - 기존 직원 검색
-   - 필요한 경우에만 신규 직원 채용
-   - 직원 업무 배정
-   - 직원 결과 검토
-   - 권한 필요 시 CEO에게 상향 보고
-   - 권한 연결 후 업무 재개
-   - 완료 후 CEO 보고
-9. manager_name은 Python Agent 이름으로 사용 가능한 영문 또는
-   영문과 밑줄 형식으로 작성한다.
-10. business_type은 짧은 영문 snake_case로 작성한다.
-11. 대표가 요구한 결과물의 성격을 정확히 구분한다.
-    - 소개, 홍보, 회사 안내 목적이면 일반 홈페이지 또는 랜딩페이지다.
-    - 업무 지시, 승인, 반려, 진행 상태, 직원 관리, Workflow 관리,
-      보고서 확인이 목적이면 운영 대시보드 또는 관리자 시스템이다.
-12. 운영 시스템을 일반 소개 홈페이지로 축소해서 해석하지 않는다.
-13. manager_instructions에 다음 내용을 구체적으로 포함한다.
-    - 최종 결과물의 종류
-    - 실제 사용 주체
-    - 반드시 구현해야 할 핵심 기능
-    - 필요한 화면과 데이터
-    - 완료 판단 기준
-14. 대표 지시에서 요구한 기능을 지점장에게 전달할 때 누락하거나
-    단순화하지 않는다.
-""".strip(),
+            instructions="너는 Business AI OS의 AI CEO이다. 대표 지시를 분석해 적절한 지점장을 결정하라.",
             output_type=CEOAnalysisResult,
         )
 
@@ -437,32 +375,7 @@ class CEOController:
 대표 지시:
 {owner_instruction}
 
-위 업무를 수행하기 위해 필요한 지점장을 결정하라.
-CEO는 지점장까지만 결정하고 직원은 결정하지 않는다.
-
-대표 지시를 단순한 업종명이나 홈페이지 제작 요청으로 축소하지 마라.
-
-반드시 다음을 먼저 판단하라.
-
-1. 실제 사용자는 누구인가
-2. 최종 결과물은 소개 페이지인가, 운영 시스템인가
-3. 사용자가 실제로 수행해야 하는 핵심 기능은 무엇인가
-4. 어떤 화면, 데이터, 승인 흐름이 필요한가
-5. 언제 업무가 완료되었다고 판단할 수 있는가
-
-판단한 결과를 manager_description, manager_instructions,
-delegation_reason에 구체적으로 반영하라.
-
-운영 홈페이지가 다음 기능을 요구하는 경우에는 일반 랜딩페이지가 아니라
-실제로 사용할 수 있는 운영 대시보드 또는 관리자 시스템으로 정의하라.
-
-- 대표 업무 지시
-- 승인 및 반려
-- Workflow 진행 상태
-- 지점장과 직원 현황
-- 권한 요청
-- 운영보고
-- 결과물 및 보고서 확인
+지점장까지만 결정하고 직원은 결정하지 않는다.
 """.strip()
 
         try:
@@ -496,10 +409,6 @@ delegation_reason에 구체적으로 반영하라.
 
         return analysis
 
-    # =====================================================
-    # 분석 결과 → 지점장 정의
-    # =====================================================
-
     def _to_manager_definition(
         self,
         analysis: ManagerAnalysis,
@@ -531,10 +440,6 @@ delegation_reason에 구체적으로 반영하라.
             ),
         )
 
-    # =====================================================
-    # CEO Agent 보장
-    # =====================================================
-
     def _ensure_ceo_agent(self) -> None:
         existing = self.registry.get_agent_by_id(
             self.CEO_AGENT_ID
@@ -549,27 +454,10 @@ delegation_reason에 구체적으로 반영하라.
             role="AI CEO",
             level="ceo",
             parent_agent_id=None,
-            instructions="""
-너는 Business AI OS의 AI CEO이다.
-
-1. 대표의 목표와 지시를 분석한다.
-2. 회사헌법, 운영원칙과 기존 자산을 먼저 확인한다.
-3. 업무를 담당할 기존 지점장을 검색한다.
-4. 적합한 지점장이 없을 때만 새 지점장을 임명한다.
-5. 지점장에게 목표와 책임을 위임한다.
-6. 직원을 직접 선발하거나 실무를 직접 수행하지 않는다.
-7. 직원 구성과 실무 관리는 지점장에게 맡긴다.
-8. 사람이 해야 하는 권한이나 승인은 대표에게 보고한다.
-9. 대표 처리 후 중단된 업무를 지점장이 재개하도록 한다.
-10. 지점장 결과를 최종 검토하고 대표에게 보고한다.
-""".strip(),
+            instructions="Business AI OS의 AI CEO로서 대표의 목표를 분석하고 지점장까지만 임명한다.",
             description="Business AI OS 전체 운영을 총괄한다.",
             created_reason="CEO Controller 자동 생성",
         )
-
-    # =====================================================
-    # 지점장 검색 및 생성
-    # =====================================================
 
     def _get_or_create_manager(
         self,
@@ -604,10 +492,6 @@ delegation_reason에 구체적으로 반영하라.
         self,
         definition: ManagerDefinition,
     ) -> str:
-        """
-        같은 역할의 기존 지점장이 있으면 실제 저장된 ID를 사용한다.
-        """
-
         existing = self.registry.find_agent(
             role=definition.role,
             level="manager",
@@ -619,10 +503,6 @@ delegation_reason에 구체적으로 반영하라.
             return str(existing["agent_id"])
 
         return definition.agent_id
-
-    # =====================================================
-    # CEO → 지점장 Handoff
-    # =====================================================
 
     def _connect_manager(
         self,
@@ -645,10 +525,6 @@ delegation_reason에 구체적으로 반영하라.
         self.handoff_manager.rebuild_organization(
             self.CEO_AGENT_ID
         )
-
-    # =====================================================
-    # ID 및 문자열 처리
-    # =====================================================
 
     @staticmethod
     def _make_manager_agent_id(
@@ -701,49 +577,4 @@ delegation_reason에 구체적으로 반영하라.
         )
 
 
-# =========================================================
-# 공용 Controller
-# =========================================================
-
 ceo_controller = CEOController()
-
-
-# =========================================================
-# 완성본 실행 테스트
-# =========================================================
-
-if __name__ == "__main__":
-    result = ceo_controller.start(
-        title="Business AI OS 운영 홈페이지 제작",
-        objective=(
-            "대표가 업무를 지시하고 승인·반려하며 "
-            "진행 상태를 확인할 수 있는 홈페이지를 만든다."
-        ),
-        owner_instruction=(
-            "Business AI OS 운영 홈페이지를 만들어라."
-        ),
-        project_id="project_business_ai_os_web_001",
-        requires_approval=True,
-    )
-
-    print("=" * 60)
-    print("CEO Controller 자동 업무 분류 테스트")
-    print("Workflow ID:", result["workflow_id"])
-    print("업무 유형:", result["business_type"])
-    print("CEO 분석:", result["analysis_summary"])
-    print("주 담당 지점장:", result["manager"]["role"])
-    print(
-        "전체 지점장:",
-        [manager["role"] for manager in result["managers"]],
-    )
-    print("직원 구성 담당:", result["worker_selection_owner"])
-    print("상태:", result["status"])
-    print("승인 상태:", result["approval_status"])
-
-    approved = ceo_controller.approve(
-        result["workflow_id"],
-        approval_note="홈페이지 제작 업무를 승인한다.",
-    )
-
-    print("최종 상태:", approved["workflow"]["status"])
-    print("=" * 60)
