@@ -344,6 +344,7 @@ def commit_changes(plan: dict[str, Any], root: Path) -> str:
     return sha.stdout.strip()
 
 
+
 def write_evidence(
     root: Path,
     instruction: str,
@@ -359,6 +360,7 @@ def write_evidence(
 
     payload = {
         "created_at": datetime.now().isoformat(timespec="seconds"),
+        "updated_at": datetime.now().isoformat(timespec="seconds"),
         "instruction": instruction,
         "model": MODEL,
         "summary": plan.get("summary", ""),
@@ -373,28 +375,105 @@ def write_evidence(
             for item in test_results
         ],
         "commit_hash": commit_hash,
+        "approval_status": "pending",
+        "workflow_status": "waiting_approval",
         "push_performed": False,
+        "push_result": None,
     }
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     return path
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description="Development Engine MVP V1")
-    parser.add_argument("instruction", nargs="*", help="수행할 개발 지시")
-    args = parser.parse_args()
+def load_latest_pending_evidence(root: Path, requested: str | None = None) -> tuple[Path, dict[str, Any]]:
+    evidence_dir = root / "development_evidence"
+    if requested:
+        candidate = Path(requested)
+        if not candidate.is_absolute():
+            candidate = evidence_dir / candidate
+        candidates = [candidate]
+    else:
+        candidates = sorted(evidence_dir.glob("*_evidence.json"), reverse=True)
 
-    instruction = " ".join(args.instruction).strip()
-    if not instruction:
-        instruction = input("개발 지시를 입력하세요: ").strip()
-    if not instruction:
-        print("[실패] 개발 지시가 비어 있습니다.")
-        return 1
+    for path in candidates:
+        if not path.exists():
+            continue
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if (
+            data.get("approval_status") == "pending"
+            and data.get("workflow_status") == "waiting_approval"
+            and data.get("commit_hash")
+            and not data.get("push_performed")
+        ):
+            return path, data
 
+    raise RuntimeError("승인 대기 중인 Evidence를 찾을 수 없습니다.")
+
+
+def approve_and_push(root: Path, evidence_arg: str | None = None) -> int:
+    ensure_repository_ready(root)
+    evidence_path, evidence = load_latest_pending_evidence(root, evidence_arg)
+
+    current_head = run_command(["git", "rev-parse", "HEAD"], root)
+    if current_head.returncode != 0:
+        raise RuntimeError(current_head.stderr.strip() or "현재 commit hash 확인 실패")
+
+    expected_commit = str(evidence["commit_hash"]).strip()
+    actual_commit = current_head.stdout.strip()
+    if actual_commit != expected_commit:
+        raise RuntimeError(
+            "현재 HEAD와 승인 대상 commit이 다릅니다.\n"
+            f"승인 대상: {expected_commit}\n현재 HEAD: {actual_commit}"
+        )
+
+    branch = run_command(["git", "branch", "--show-current"], root)
+    current_branch = branch.stdout.strip()
+    if current_branch != "ai-ceo-dev":
+        raise RuntimeError(f"ai-ceo-dev 브랜치에서만 Push할 수 있습니다: {current_branch}")
+
+    push = run_command(["git", "push", "origin", "ai-ceo-dev"], root, timeout=600)
+    now = datetime.now().isoformat(timespec="seconds")
+
+    evidence["updated_at"] = now
+    evidence["approval_status"] = "approved"
+    evidence["push_result"] = {
+        "command": push.command,
+        "returncode": push.returncode,
+        "stdout": push.stdout[-8000:],
+        "stderr": push.stderr[-8000:],
+    }
+
+    if push.returncode == 0:
+        evidence["push_performed"] = True
+        evidence["workflow_status"] = "completed"
+        evidence_path.write_text(
+            json.dumps(evidence, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+        print("[성공] 대표 승인 후 Git Push 완료")
+        print("[Commit]", expected_commit)
+        print("[Branch] ai-ceo-dev")
+        print("[Evidence]", evidence_path)
+        return 0
+
+    evidence["push_performed"] = False
+    evidence["workflow_status"] = "failed"
+    evidence_path.write_text(
+        json.dumps(evidence, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    raise RuntimeError(
+        "git push 실패\n"
+        + (push.stderr.strip() or push.stdout.strip() or "원인을 확인할 수 없습니다.")
+    )
+
+def run_development_task(instruction: str) -> int:
     api_key = os.getenv("OPENAI_API_KEY", "").strip()
     if not api_key:
         print("[실패] OPENAI_API_KEY 환경변수가 없습니다.")
-        print("C:\\DevelopmentEngine\\.env 또는 Windows 환경변수에 API Key를 설정하세요.")
+        print("C:\\DevelopmentEngine\\.env에 API Key를 설정하세요.")
         return 1
 
     try:
@@ -422,11 +501,12 @@ def main() -> int:
                 evidence = write_evidence(
                     ROOT, instruction, plan, changed, test_results, commit_hash
                 )
-                print("[성공] 자동 수정 및 Git commit 완료")
+                print("[성공] 자동 수정·테스트·Git commit 완료")
                 print("[수정 파일]", ", ".join(changed))
                 print("[Commit]", commit_hash)
                 print("[Evidence]", evidence)
-                print("[안내] 이 MVP는 안전을 위해 git push를 자동 실행하지 않습니다.")
+                print("[상태] waiting_approval")
+                print("[다음] 대표 승인 후 approve_development_push.cmd 실행")
                 return 0
 
             previous_error = (
@@ -446,6 +526,38 @@ def main() -> int:
     except Exception as exc:
         print(f"[실패] {type(exc).__name__}: {exc}")
         return 1
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Development Engine MVP V2")
+    subparsers = parser.add_subparsers(dest="mode")
+
+    run_parser = subparsers.add_parser("run", help="개발 지시 실행")
+    run_parser.add_argument("instruction", nargs="*", help="수행할 개발 지시")
+
+    approve_parser = subparsers.add_parser("approve", help="대표 승인 후 Git Push")
+    approve_parser.add_argument("--evidence", default=None, help="승인할 Evidence 파일명 또는 경로")
+
+    args = parser.parse_args()
+
+    if args.mode == "approve":
+        try:
+            return approve_and_push(ROOT, args.evidence)
+        except Exception as exc:
+            print(f"[실패] {type(exc).__name__}: {exc}")
+            return 1
+
+    instruction = ""
+    if args.mode == "run":
+        instruction = " ".join(args.instruction).strip()
+
+    if not instruction:
+        instruction = input("개발 지시를 입력하세요: ").strip()
+    if not instruction:
+        print("[실패] 개발 지시가 비어 있습니다.")
+        return 1
+
+    return run_development_task(instruction)
 
 
 if __name__ == "__main__":
