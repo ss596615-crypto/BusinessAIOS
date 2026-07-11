@@ -1979,9 +1979,27 @@ class WorkflowManager:
             step=step,
         )
 
+        execution_status = str(execution_result.get("status") or "").strip()
+        if execution_status not in {"completed", "waiting_permission"}:
+            raise WorkflowExecutionError(
+                execution_result.get("error")
+                or execution_result.get("failure_reason")
+                or f"Worker 실제 실행 실패: {execution_status or 'unknown'}"
+            )
+
+        development_evidence = execution_result.get("development_evidence") or {}
+        if development_evidence:
+            metadata = dict(workflow.get("metadata") or {})
+            metadata["development_evidence"] = development_evidence
+            metadata["evidence_required"] = True
+            self._set_workflow_fields(
+                str(workflow["workflow_id"]),
+                {"metadata": metadata, "updated_at": self._utc_now()},
+            )
+
         return {
             "execution_completed": (
-                execution_result.get("status") == "completed"
+                execution_status == "completed"
             ),
             "execution_status": execution_result.get("status"),
             "assigned_agent_id": assigned_agent_id,
@@ -1995,6 +2013,7 @@ class WorkflowManager:
             ),
             "next_action": execution_result.get("next_action", ""),
             "limitations": execution_result.get("limitations", []),
+            "development_evidence": development_evidence,
         }
 
     def _handle_manager_review(

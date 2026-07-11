@@ -248,27 +248,53 @@ else:
             st.write("승인:", current_progress.get("approval_status", "-"))
 
 st.divider()
-st.markdown("### 대표 의사결정")
-col_a, col_r, col_s, col_p = st.columns(4)
-with col_a:
-    approve_clicked = st.button(
-        "승인",
-        type="primary",
-        use_container_width=True,
-        disabled=current_workflow is None or current_workflow.get("status") != "waiting_approval",
-    )
-with col_r:
-    reject_clicked = st.button(
-        "반려",
-        use_container_width=True,
-        disabled=current_workflow is None or current_workflow.get("status") != "waiting_approval",
-    )
-with col_s:
-    status_clicked = st.button("상태 확인", use_container_width=True, disabled=current_workflow is None)
-with col_p:
-    report_clicked = st.button("CEO 보고", use_container_width=True, disabled=current_workflow is None)
+approval_pending = bool(
+    current_workflow
+    and current_workflow.get("status") == "waiting_approval"
+    and current_workflow.get("approval_status") == "pending"
+)
 
-rejection_reason = st.text_input("반려 사유", placeholder="반려 시 수정이 필요한 내용을 입력하세요.")
+approve_clicked = False
+reject_clicked = False
+status_clicked = False
+report_clicked = False
+rejection_reason = ""
+
+if approval_pending:
+    st.markdown("### 대표 의사결정")
+    col_a, col_r, col_s, col_p = st.columns(4)
+    with col_a:
+        approve_clicked = st.button("승인", type="primary", use_container_width=True)
+    with col_r:
+        reject_clicked = st.button("반려", use_container_width=True)
+    with col_s:
+        status_clicked = st.button("상태 확인", use_container_width=True)
+    with col_p:
+        report_clicked = st.button("CEO 보고", use_container_width=True)
+    rejection_reason = st.text_input(
+        "반려 사유",
+        placeholder="반려 시 수정이 필요한 내용을 입력하세요.",
+    )
+else:
+    st.markdown("### Workflow 확인")
+    col_s, col_p = st.columns(2)
+    with col_s:
+        status_clicked = st.button(
+            "상태 확인",
+            use_container_width=True,
+            disabled=current_workflow is None,
+        )
+    with col_p:
+        report_clicked = st.button(
+            "CEO 보고",
+            use_container_width=True,
+            disabled=current_workflow is None,
+        )
+    if current_workflow is not None:
+        st.info(
+            f"승인 {current_workflow.get('approval_status', '-')} · "
+            f"현재 상태: {current_workflow.get('status', '-')}"
+        )
 
 if approve_clicked and current_workflow is not None:
     workflow_id = current_workflow["workflow_id"]
@@ -285,18 +311,18 @@ if approve_clicked and current_workflow is not None:
         st.success("승인이 완료되었습니다.")
         st.rerun()
     except Exception as error:
-        st.error(f"승인 처리 오류: {error}")
+        st.error(f"승인 처리 오류: {type(error).__name__}: {error}")
 
 if reject_clicked and current_workflow is not None:
     workflow_id = current_workflow["workflow_id"]
-    reason = rejection_reason.strip() or "대표 반려"
+    reason = (rejection_reason or "").strip() or "대표 반려"
     try:
         runtime.reject(workflow_id, reason)
         add_chat("AI CEO", f"대표 반려를 접수했습니다.\n- 반려 사유: {reason}")
         st.success("반려 처리가 완료되었습니다.")
         st.rerun()
     except Exception as error:
-        st.error(f"반려 처리 오류: {error}")
+        st.error(f"반려 처리 오류: {type(error).__name__}: {error}")
 
 if status_clicked and current_workflow is not None:
     add_chat("AI CEO", format_progress_report(current_workflow["workflow_id"]))
