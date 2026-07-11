@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import os
 import shutil
 import subprocess
@@ -184,6 +185,9 @@ def request_change_plan(
 7. 새 파일 생성도 허용한다.
 8. 파일 삭제는 금지한다.
 9. README 같은 단순 작업도 실제 파일 수정으로 수행한다.
+10. 사용자가 파일명을 명시하면 그 파일만 수정한다.
+11. 요청과 무관한 *_old.py, 백업 파일, 레거시 파일은 절대 수정하지 않는다.
+12. test_commands는 참고용이며 실제 테스트는 엔진이 변경 파일 기준으로 결정한다.
 
 응답 형식:
 {{
@@ -213,9 +217,19 @@ def request_change_plan(
     return parse_json_response(response.output_text)
 
 
-def validate_plan(plan: dict[str, Any], root: Path) -> None:
+def extract_explicit_paths(instruction: str) -> set[str]:
+    matches = re.findall(
+        r"(?i)(?:[A-Za-z0-9_.-]+/)*[A-Za-z0-9_.-]+\.(?:py|md|txt|json|yaml|yml|toml|html|css|js|jsx|ts|tsx|ini|cfg)",
+        instruction,
+    )
+    return {item.replace("\\", "/") for item in matches}
+
+
+def validate_plan(plan: dict[str, Any], root: Path, instruction: str) -> None:
     if not plan["files"]:
         raise ValueError("수정 대상 파일이 없습니다.")
+
+    explicit_paths = extract_explicit_paths(instruction)
 
     for item in plan["files"]:
         if not isinstance(item, dict):
@@ -227,6 +241,13 @@ def validate_plan(plan: dict[str, Any], root: Path) -> None:
         if not isinstance(content, str):
             raise ValueError(f"{rel}: content가 문자열이 아닙니다.")
 
+        normalized_rel = rel.replace("\\", "/")
+        if explicit_paths and normalized_rel not in explicit_paths:
+            raise ValueError(
+                f"지시에 명시되지 않은 파일 수정은 허용하지 않습니다: {normalized_rel}. "
+                f"허용 파일: {sorted(explicit_paths)}"
+            )
+
         target = (root / rel).resolve()
         try:
             target.relative_to(root.resolve())
@@ -235,7 +256,6 @@ def validate_plan(plan: dict[str, Any], root: Path) -> None:
 
         if is_blocked(target):
             raise ValueError(f"보안상 수정할 수 없는 파일입니다: {rel}")
-
 
 def apply_plan(plan: dict[str, Any], root: Path) -> tuple[Path, list[str]]:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -272,21 +292,37 @@ def rollback(root: Path, backup_root: Path, changed: list[str]) -> None:
             target.unlink()
 
 
-def run_tests(plan: dict[str, Any], root: Path) -> list[CommandResult]:
-    commands = plan.get("test_commands")
-    if not isinstance(commands, list) or not commands:
-        commands = [["py", "-m", "compileall", "."]]
-
+def run_tests(plan: dict[str, Any], root: Path, changed: list[str]) -> list[CommandResult]:
     results: list[CommandResult] = []
-    for command in commands:
-        if not isinstance(command, list) or not all(isinstance(x, str) for x in command):
-            raise ValueError(f"잘못된 테스트 명령 형식: {command}")
-        result = run_command(command, root, timeout=600)
+
+    python_files = [item for item in changed if item.lower().endswith(".py")]
+    for rel in python_files:
+        result = run_command(["py", "-m", "py_compile", rel], root, timeout=120)
         results.append(result)
         if result.returncode != 0:
-            break
-    return results
+            return results
 
+    # 비코드 파일만 수정한 경우에는 저장·diff 검증을 테스트로 사용합니다.
+    if not python_files:
+        diff = run_command(["git", "diff", "--check"], root, timeout=120)
+        results.append(diff)
+        if diff.returncode != 0:
+            return results
+
+        for rel in changed:
+            target = root / rel
+            if not target.exists():
+                results.append(
+                    CommandResult(
+                        command=f"verify {rel}",
+                        returncode=1,
+                        stdout="",
+                        stderr=f"수정 대상 파일이 존재하지 않습니다: {rel}",
+                    )
+                )
+                return results
+
+    return results
 
 def commit_changes(plan: dict[str, Any], root: Path) -> str:
     add = run_command(["git", "add", "."], root)
@@ -373,12 +409,12 @@ def main() -> int:
         for attempt in range(1, 4):
             print(f"[{attempt}/3] AI 수정안 생성 중...")
             plan = request_change_plan(client, instruction, repo_context, previous_error)
-            validate_plan(plan, ROOT)
+            validate_plan(plan, ROOT, instruction)
 
             backup_root, changed = apply_plan(plan, ROOT)
             print("[수정]", ", ".join(changed))
 
-            test_results = run_tests(plan, ROOT)
+            test_results = run_tests(plan, ROOT, changed)
             failed = next((r for r in test_results if r.returncode != 0), None)
 
             if failed is None:

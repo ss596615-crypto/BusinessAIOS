@@ -1,34 +1,13 @@
-# Development Engine MVP V1
+# Development Engine MVP V1.1
 
-## 설치
+수정 내용:
+- 지시에 파일명이 있으면 해당 파일만 수정
+- 무관한 *_old.py 수정 차단
+- 전체 저장소 compileall 제거
+- 변경된 Python 파일만 py_compile
+- README/문서 수정은 git diff --check로 검증
 
-ZIP 안의 파일을 `C:\DevelopmentEngine`에 복사합니다.
-
-```cmd
-cd /d C:\DevelopmentEngine
-py -m pip install -r requirements_dev_engine.txt
-```
-
-`.env` 파일을 만듭니다.
-
-```env
-OPENAI_API_KEY=본인의_API_KEY
-OPENAI_MODEL=gpt-5.2
-```
-
-## 첫 테스트
-
-`run_development_engine.cmd`를 더블클릭하고 아래 지시를 입력합니다.
-
-```text
-README.md 마지막 줄에 Hello AI CEO를 추가하라.
-```
-
-성공 기준:
-
-- README.md 실제 수정
-- 자동 테스트 성공
-- 새 Git commit 생성
-- `development_evidence` 폴더에 증거 JSON 생성
-
-이 MVP는 안전을 위해 자동 push는 하지 않습니다.
+적용:
+1. 파일을 C:\DevelopmentEngine에 덮어쓰기
+2. 아래 4개 파일만 커밋
+3. run_development_engine.cmd 실행
