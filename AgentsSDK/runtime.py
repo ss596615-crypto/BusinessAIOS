@@ -826,30 +826,5 @@ except Exception as exc:
         pid = current.get("pid")
         if not pid:
             return {"restored": False, "reason": "no_previous_process"}
-        return self._stop_process_tree(int(pid))
-
-    def _atomic_write_json(self, path: Path, data: dict[str, Any]) -> None:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        tmp_path = path.with_suffix(path.suffix + f".{uuid.uuid4().hex}.tmp")
-        tmp_path.write_text(json.dumps(data, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
-        os.replace(tmp_path, path)
-
-    def _save_runtime_state(self, workflow_id: str, state: dict[str, Any]) -> None:
-        path = RUNTIME_STATE_DIR / f"{workflow_id}.json"
-        self._atomic_write_json(path, state)
-
-    def _load_runtime_state(self, workflow_id: str) -> dict[str, Any] | None:
-        path = RUNTIME_STATE_DIR / f"{workflow_id}.json"
-        if not path.exists():
-            return None
-        try:
-            return json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            return None
-
-    @staticmethod
-    def _now() -> str:
-        return datetime.now(timezone.utc).isoformat()
-
-
-runtime = BusinessAIRuntime()
+ 
+# ... truncated ...
