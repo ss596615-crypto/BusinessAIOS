@@ -68,9 +68,14 @@ class DevelopmentEngine:
         "development_os",
         "devops",
         "v2.2",
+        "v2.3",
         "업그레이드",
         "개선",
         "리팩토링",
+        "git 작업공간",
+        "stash",
+        "push",
+        "restore",
     )
 
     def __init__(self, repo_root: Path = REPO_ROOT) -> None:
@@ -120,12 +125,7 @@ class DevelopmentEngine:
             raise DevelopmentEngineError("Workflow ID가 없습니다.")
 
         state_file = self.state_file_for(workflow_id)
-        self._write_trace(
-            workflow_id,
-            "development_engine",
-            "started",
-            worker_agent_id,
-        )
+        self._write_trace(workflow_id, "development_engine", "started", worker_agent_id)
 
         if state_file.exists():
             previous = json.loads(state_file.read_text(encoding="utf-8"))
@@ -146,51 +146,24 @@ class DevelopmentEngine:
                 )
             branch = self._current_branch()
 
-        fetch_result = self._git(
-            ["fetch", "origin", "ai-ceo-dev"],
-            check=False,
-        )
+        fetch_result = self._git(["fetch", "origin", "ai-ceo-dev"], check=False)
 
-        preexisting_changes = self._git(
-            ["status", "--porcelain"],
-            check=False,
-        )["stdout"].splitlines()
+        preexisting_changes = self._git(["status", "--porcelain"], check=False)["stdout"].splitlines()
 
-        self._write_trace(
-            workflow_id,
-            "git_preflight",
-            "passed",
-            f"branch={branch}; dirty_entries={len(preexisting_changes)}",
-        )
+        self._write_trace(workflow_id, "git_preflight", "passed", f"branch={branch}; dirty_entries={len(preexisting_changes)}")
 
-        instruction = str(
-            workflow.get("owner_instruction")
-            or workflow.get("objective")
-            or ""
-        )
+        instruction = str(workflow.get("owner_instruction") or workflow.get("objective") or "")
 
         candidates = self._find_candidate_files(instruction)
-        self._write_trace(
-            workflow_id,
-            "file_search",
-            "passed",
-            ", ".join(candidates),
-        )
+        self._write_trace(workflow_id, "file_search", "passed", ", ".join(candidates))
 
         context = self._build_code_context(candidates)
         plan = self._create_plan(workflow, context)
 
-        self._write_trace(
-            workflow_id,
-            "plan",
-            "passed",
-            plan.summary,
-        )
+        self._write_trace(workflow_id, "plan", "passed", plan.summary)
 
         if not plan.changes:
-            raise DevelopmentEngineError(
-                "AI 개발자가 수정 파일을 결정하지 못했습니다."
-            )
+            raise DevelopmentEngineError("AI 개발자가 수정 파일을 결정하지 못했습니다.")
 
         self._validate_plan(plan)
         backup_dir = self._backup_files(workflow_id, plan.changes)
@@ -198,24 +171,11 @@ class DevelopmentEngine:
 
         try:
             changed_files = self._apply_changes(plan.changes)
-            self._write_trace(
-                workflow_id,
-                "file_modify",
-                "passed",
-                ", ".join(changed_files),
-            )
+            self._write_trace(workflow_id, "file_modify", "passed", ", ".join(changed_files))
 
-            test_result = self._run_tests(
-                requested=plan.tests,
-                changed_files=changed_files,
-            )
+            test_result = self._run_tests(requested=plan.tests, changed_files=changed_files)
 
-            self._write_trace(
-                workflow_id,
-                "tests",
-                "passed" if test_result["passed"] else "failed",
-                "; ".join(test_result.get("commands") or []),
-            )
+            self._write_trace(workflow_id, "tests", "passed" if test_result["passed"] else "failed", "; ".join(test_result.get("commands") or []))
 
             if not test_result["passed"]:
                 self._restore_backup(backup_dir, plan.changes)
@@ -224,48 +184,28 @@ class DevelopmentEngine:
                     + test_result["output"][-4000:]
                 )
 
-            diff = self._git(
-                ["diff", "--", *changed_files],
-                check=False,
-            )["stdout"]
+            diff = self._git(["diff", "--", *changed_files], check=False)["stdout"]
 
             if not diff.strip():
-                raise DevelopmentEngineError(
-                    "실제 Git 변경사항이 생성되지 않았습니다."
-                )
+                raise DevelopmentEngineError("실제 Git 변경사항이 생성되지 않았습니다.")
 
             self._git(["reset"], check=False)
             self._git(["add", "--", *changed_files])
 
             commit_message = f"AI CEO: {self._short_title(instruction)}"
-            commit_result = self._git(
-                [
-                    "commit",
-                    "-m",
-                    commit_message,
-                    "--",
-                    *changed_files,
-                ]
-            )
+            commit_result = self._git(["commit", "-m", commit_message, "--", *changed_files])
 
-            commit_hash = self._git(
-                ["rev-parse", "HEAD"]
-            )["stdout"].strip()
+            commit_hash = self._git(["rev-parse", "HEAD"])["stdout"].strip()
 
-            self._write_trace(
-                workflow_id,
-                "git_commit",
-                "passed",
-                commit_hash,
-            )
+            self._write_trace(workflow_id, "git_commit", "passed", commit_hash)
 
             result = {
                 "workflow_id": workflow_id,
                 "worker_agent_id": worker_agent_id,
                 "status": "completed",
                 "work_summary": (
-                    "AI CEO Development Engine V2.2가 실제 코드를 수정하고 "
-                    "안전 검증, 자동 테스트, Git Commit을 완료했습니다."
+                    "AI CEO Development Engine V2.3가 실제 코드를 수정하고 "
+                    "Git 작업공간 상태 점검, 백업, 자동 테스트, Git Commit을 완료했습니다."
                 ),
                 "result_summary": plan.summary,
                 "saved_files": changed_files,
@@ -281,89 +221,54 @@ class DevelopmentEngine:
                 ],
                 "next_action": "대표 승인 후 GitHub Push",
                 "limitations": plan.limitations,
-                "development_evidence": {
-                    "engine_version": "v2.2",
-                    "branch": branch,
-                    "git_fetch": (fetch_result["stdout"] + fetch_result["stderr"]),
-                    "candidate_files": candidates,
-                    "changed_files": changed_files,
-                    "backup_dir": str(backup_dir),
-                    "tests": test_result,
-                    "git_diff": diff,
-                    "git_commit": commit_hash,
-                    "git_commit_output": commit_result["stdout"],
-                    "pending_push": True,
-                    "preexisting_changes": preexisting_changes,
-                    "trace_file": str(DEV_STATE_DIR / f"{workflow_id}.trace.log"),
-                    "created_at": self._now(),
-                },
             }
 
-            state_file.write_text(
-                json.dumps(
-                    result,
-                    ensure_ascii=False,
-                    indent=2,
-                ),
-                encoding="utf-8",
-            )
+            result["development_evidence"] = {
+                "engine_version": "v2.3",
+                "branch": branch,
+                "git_fetch": (fetch_result["stdout"] + fetch_result["stderr"]),
+                "candidate_files": candidates,
+                "changed_files": changed_files,
+                "backup_dir": str(backup_dir),
+                "tests": test_result,
+                "git_diff": diff,
+                "git_commit": commit_hash,
+                "git_commit_output": commit_result["stdout"],
+                "pending_push": True,
+                "preexisting_changes": preexisting_changes,
+                "trace_file": str(DEV_STATE_DIR / f"{workflow_id}.trace.log"),
+                "created_at": self._now(),
+            }
 
-            self._write_trace(
-                workflow_id,
-                "development_engine",
-                "completed",
-                commit_hash,
-            )
-
+            state_file.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+            self._write_trace(workflow_id, "development_engine", "completed", commit_hash)
             return result
 
         except Exception as exc:
-            self._write_trace(
-                workflow_id,
-                "development_engine",
-                "failed",
-                str(exc),
-            )
+            self._write_trace(workflow_id, "development_engine", "failed", str(exc))
 
             if changed_files and not self._has_staged_changes():
-                self._restore_backup(
-                    backup_dir,
-                    plan.changes,
-                )
+                self._restore_backup(backup_dir, plan.changes)
 
             raise
 
-    def push_after_approval(
-        self,
-        workflow_id: str,
-    ) -> dict[str, Any]:
-        state_file = DEV_STATE_DIR / f"{workflow_id}.json"
+    def push_after_approval(self, workflow_id: str) -> dict[str, Any]:
+        state_file = self.state_file_for(workflow_id)
 
         if not state_file.exists():
-            return {
-                "pushed": False,
-                "reason": "development_state_not_found",
-            }
+            return {"pushed": False, "reason": "development_state_not_found"}
 
         state = json.loads(state_file.read_text(encoding="utf-8"))
         evidence = state.get("development_evidence") or {}
 
         if not evidence.get("pending_push"):
-            return {
-                "pushed": False,
-                "reason": "push_not_pending",
-                "state": state,
-            }
+            return {"pushed": False, "reason": "push_not_pending", "state": state}
 
         branch = self._current_branch()
         if branch != "ai-ceo-dev":
-            raise DevelopmentEngineError(
-                f"Push 차단: 현재 브랜치는 {branch}입니다."
-            )
+            raise DevelopmentEngineError(f"Push 차단: 현재 브랜치는 {branch}입니다.")
 
-        pushed = self._git(
-            ["push", "origin", "ai-ceo-dev"]
-        )
+        pushed = self._git(["push", "origin", "ai-ceo-dev"])
 
         evidence["pending_push"] = False
         evidence["pushed"] = True
@@ -373,26 +278,11 @@ class DevelopmentEngine:
         state["development_evidence"] = evidence
         state["next_action"] = "GitHub Push 완료"
 
-        state_file.write_text(
-            json.dumps(
-                state,
-                ensure_ascii=False,
-                indent=2,
-            ),
-            encoding="utf-8",
-        )
+        state_file.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
 
-        return {
-            "pushed": True,
-            "workflow_id": workflow_id,
-            "evidence": evidence,
-        }
+        return {"pushed": True, "workflow_id": workflow_id, "evidence": evidence}
 
-    def _create_plan(
-        self,
-        workflow: dict[str, Any],
-        context: str,
-    ) -> DevelopmentPlan:
+    def _create_plan(self, workflow: dict[str, Any], context: str) -> DevelopmentPlan:
         agent = Agent(
             name="Business_AI_OS_Code_Developer",
             instructions=(
@@ -403,7 +293,7 @@ class DevelopmentEngine:
                 ".env, credentials.json, token 파일, .git 내부 파일은 "
                 "절대 수정하지 않는다. 기존 구조와 공개 API를 최대한 "
                 "유지하고 테스트 가능한 변경만 제안한다. "
-                "Development Engine V2.2 기준으로 안전성, 증거성, 승인 후 "
+                "Development Engine V2.3 기준으로 안전성, 증거성, 승인 후 "
                 "재개 가능성을 우선한다."
             ),
             output_type=DevelopmentPlan,
@@ -424,10 +314,7 @@ Python 변경이면 tests에 최소한 py_compile 검증 명령을 포함하라.
 가능하면 plan.summary에 변경 목적과 안전성 요약을 적고, limitations에는 남은 제약을 적어라.
 """.strip()
 
-        result = Runner.run_sync(
-            starting_agent=agent,
-            input=prompt,
-        ).final_output
+        result = Runner.run_sync(starting_agent=agent, input=prompt).final_output
 
         if isinstance(result, DevelopmentPlan):
             return result
@@ -445,29 +332,15 @@ Python 변경이면 tests에 최소한 py_compile 검증 명령을 포함하라.
             lower = rel.lower()
             if lower.startswith(".git/") or "/.git/" in lower:
                 raise DevelopmentEngineError(f".git 내부 파일 수정은 금지됩니다: {rel}")
-            if any(
-                forbidden in lower
-                for forbidden in (
-                    ".env",
-                    "credentials.json",
-                    "token",
-                    "client_secret.json",
-                )
-            ):
+            if any(forbidden in lower for forbidden in (".env", "credentials.json", "token", "client_secret.json")):
                 raise DevelopmentEngineError(f"비밀정보 파일 수정은 금지됩니다: {rel}")
             if change.action.lower() not in {"create", "modify"}:
                 raise DevelopmentEngineError(f"지원하지 않는 변경 action 입니다: {change.action}")
 
-    def _find_candidate_files(
-        self,
-        instruction: str,
-    ) -> list[str]:
+    def _find_candidate_files(self, instruction: str) -> list[str]:
         tokens = {
             token.lower()
-            for token in re.findall(
-                r"[A-Za-z_][A-Za-z0-9_]{2,}|[가-힣]{2,}",
-                instruction,
-            )
+            for token in re.findall(r"[A-Za-z_][A-Za-z0-9_]{2,}|[가-힣]{2,}", instruction)
         }
 
         preferred = [
@@ -477,6 +350,7 @@ Python 변경이면 tests에 최소한 py_compile 검증 명령을 포함하라.
             "AgentsSDK/worker_controller.py",
             "AgentsSDK/runtime.py",
             "AgentsSDK/development_engine.py",
+            "AgentsSDK/bootstrap_engine.py",
             "core/workflow.py",
             "core/approval_manager.py",
         ]
@@ -522,10 +396,7 @@ Python 변경이면 tests에 최소한 py_compile 검증 명령을 포함하라.
 
         return results[:15]
 
-    def _build_code_context(
-        self,
-        candidates: list[str],
-    ) -> str:
+    def _build_code_context(self, candidates: list[str]) -> str:
         chunks: list[str] = []
         total = 0
 
@@ -546,10 +417,7 @@ Python 변경이면 tests에 최소한 py_compile 검증 명령을 포함하라.
 
         return "".join(chunks)
 
-    def _apply_changes(
-        self,
-        changes: list[FileChange],
-    ) -> list[str]:
+    def _apply_changes(self, changes: list[FileChange]) -> list[str]:
         changed: list[str] = []
 
         for change in changes:
@@ -566,9 +434,7 @@ Python 변경이면 tests에 최소한 py_compile 검증 명령을 포함하라.
             target = (self.repo_root / rel).resolve()
 
             if self.repo_root not in target.parents and target != self.repo_root:
-                raise DevelopmentEngineError(
-                    f"저장소 밖 파일 수정 차단: {rel}"
-                )
+                raise DevelopmentEngineError(f"저장소 밖 파일 수정 차단: {rel}")
 
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(change.content, encoding="utf-8")
@@ -576,11 +442,7 @@ Python 변경이면 tests에 최소한 py_compile 검증 명령을 포함하라.
 
         return sorted(set(changed))
 
-    def _backup_files(
-        self,
-        workflow_id: str,
-        changes: list[FileChange],
-    ) -> Path:
+    def _backup_files(self, workflow_id: str, changes: list[FileChange]) -> Path:
         stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         root = BACKUP_ROOT / f"{workflow_id}_{stamp}"
 
@@ -595,11 +457,7 @@ Python 변경이면 tests에 최소한 py_compile 검증 명령을 포함하라.
 
         return root
 
-    def _restore_backup(
-        self,
-        backup_dir: Path,
-        changes: list[FileChange],
-    ) -> None:
+    def _restore_backup(self, backup_dir: Path, changes: list[FileChange]) -> None:
         for change in changes:
             rel = change.relative_path.replace("\\", "/").lstrip("/")
             target = self.repo_root / rel
@@ -613,11 +471,7 @@ Python 변경이면 tests에 최소한 py_compile 검증 명령을 포함하라.
 
         self._git(["reset", "--mixed"], check=False)
 
-    def _run_tests(
-        self,
-        requested: list[str],
-        changed_files: list[str],
-    ) -> dict[str, Any]:
+    def _run_tests(self, requested: list[str], changed_files: list[str]) -> dict[str, Any]:
         commands: list[list[str]] = []
         skipped: list[str] = []
 
@@ -627,13 +481,7 @@ Python 변경이면 tests에 최소한 py_compile 검증 명령을 포함하라.
         if python_files:
             commands.append([python_executable, "-m", "py_compile", *python_files])
 
-        pytest_project = bool(
-            (self.repo_root / "pytest.ini").exists()
-            or (self.repo_root / "pyproject.toml").exists()
-            or (self.repo_root / "setup.cfg").exists()
-            or list(self.repo_root.glob("test_*.py"))
-            or list(self.repo_root.glob("tests/test_*.py"))
-        )
+        pytest_project = bool((self.repo_root / "pytest.ini").exists() or (self.repo_root / "pyproject.toml").exists() or (self.repo_root / "setup.cfg").exists() or list(self.repo_root.glob("test_*.py")) or list(self.repo_root.glob("tests/test_*.py")))
 
         pytest_available = importlib.util.find_spec("pytest") is not None
 
@@ -676,9 +524,7 @@ Python 변경이면 tests에 최소한 py_compile 검증 명령을 포함하라.
                 else:
                     raise
 
-            outputs.append(
-                "$ " + " ".join(effective_command) + "\n" + proc.stdout + "\n" + proc.stderr
-            )
+            outputs.append("$ " + " ".join(effective_command) + "\n" + proc.stdout + "\n" + proc.stderr)
 
             if proc.returncode != 0:
                 all_passed = False
@@ -699,16 +545,12 @@ Python 변경이면 tests에 최소한 py_compile 검증 명령을 포함하라.
 
     def _ensure_git_repository(self) -> None:
         if not (self.repo_root / ".git").exists():
-            raise DevelopmentEngineError(
-                "Git 저장소가 연결되어 있지 않습니다."
-            )
+            raise DevelopmentEngineError("Git 저장소가 연결되어 있지 않습니다.")
 
     def _ensure_clean_worktree(self) -> None:
         status = self._git(["status", "--porcelain"], check=False)
         if status["stdout"].strip():
-            raise DevelopmentEngineError(
-                "작업 폴더에 커밋되지 않은 변경사항이 있습니다."
-            )
+            raise DevelopmentEngineError("작업 폴더에 커밋되지 않은 변경사항이 있습니다.")
 
     def _current_branch(self) -> str:
         return self._git(["branch", "--show-current"])["stdout"].strip()
@@ -719,11 +561,7 @@ Python 변경이면 tests에 최소한 py_compile 검증 명령을 포함하라.
     def _has_staged_changes(self) -> bool:
         return bool(self._git(["diff", "--cached", "--name-only"], check=False)["stdout"].strip())
 
-    def _git(
-        self,
-        args: list[str],
-        check: bool = True,
-    ) -> dict[str, Any]:
+    def _git(self, args: list[str], check: bool = True) -> dict[str, Any]:
         proc = subprocess.run(
             ["git", *args],
             cwd=self.repo_root,
@@ -736,9 +574,7 @@ Python 변경이면 tests에 최소한 py_compile 검증 명령을 포함하라.
         )
 
         if check and proc.returncode != 0:
-            raise DevelopmentEngineError(
-                f"git {' '.join(args)} 실패:\n{proc.stdout}\n{proc.stderr}"
-            )
+            raise DevelopmentEngineError(f"git {' '.join(args)} 실패:\n{proc.stdout}\n{proc.stderr}")
 
         return {
             "returncode": proc.returncode,
