@@ -7,6 +7,7 @@ import os
 import re
 import shutil
 import subprocess
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -39,6 +40,14 @@ class DevelopmentEngineError(RuntimeError):
     pass
 
 
+@dataclass(frozen=True)
+class TestCommandResult:
+    command: str
+    returncode: int
+    stdout: str
+    stderr: str
+
+
 class DevelopmentEngine:
     """AI CEO 개발 업무를 실제 로컬 저장소에서 수행하는 실행 엔진."""
 
@@ -58,6 +67,10 @@ class DevelopmentEngine:
         "development engine",
         "development_os",
         "devops",
+        "v2.2",
+        "업그레이드",
+        "개선",
+        "리팩토링",
     )
 
     def __init__(self, repo_root: Path = REPO_ROOT) -> None:
@@ -120,6 +133,7 @@ class DevelopmentEngine:
             return previous
 
         self._ensure_git_repository()
+        self._ensure_clean_worktree()
 
         branch = self._current_branch()
         if branch != "ai-ceo-dev":
@@ -178,6 +192,7 @@ class DevelopmentEngine:
                 "AI 개발자가 수정 파일을 결정하지 못했습니다."
             )
 
+        self._validate_plan(plan)
         backup_dir = self._backup_files(workflow_id, plan.changes)
         changed_files: list[str] = []
 
@@ -191,8 +206,8 @@ class DevelopmentEngine:
             )
 
             test_result = self._run_tests(
-                plan.tests,
-                changed_files,
+                requested=plan.tests,
+                changed_files=changed_files,
             )
 
             self._write_trace(
@@ -249,8 +264,8 @@ class DevelopmentEngine:
                 "worker_agent_id": worker_agent_id,
                 "status": "completed",
                 "work_summary": (
-                    "AI CEO Development Engine이 실제 코드를 수정하고 "
-                    "자동 테스트와 Git Commit을 완료했습니다."
+                    "AI CEO Development Engine V2.2가 실제 코드를 수정하고 "
+                    "안전 검증, 자동 테스트, Git Commit을 완료했습니다."
                 ),
                 "result_summary": plan.summary,
                 "saved_files": changed_files,
@@ -267,6 +282,7 @@ class DevelopmentEngine:
                 "next_action": "대표 승인 후 GitHub Push",
                 "limitations": plan.limitations,
                 "development_evidence": {
+                    "engine_version": "v2.2",
                     "branch": branch,
                     "git_fetch": (fetch_result["stdout"] + fetch_result["stderr"]),
                     "candidate_files": candidates,
@@ -386,7 +402,9 @@ class DevelopmentEngine:
                 "부분 코드가 아닌 전체 완성본을 반환한다. "
                 ".env, credentials.json, token 파일, .git 내부 파일은 "
                 "절대 수정하지 않는다. 기존 구조와 공개 API를 최대한 "
-                "유지하고 테스트 가능한 변경만 제안한다."
+                "유지하고 테스트 가능한 변경만 제안한다. "
+                "Development Engine V2.2 기준으로 안전성, 증거성, 승인 후 "
+                "재개 가능성을 우선한다."
             ),
             output_type=DevelopmentPlan,
         )
@@ -403,6 +421,7 @@ class DevelopmentEngine:
 
 수정할 파일의 저장소 기준 relative_path, action, 전체 content, reason을 반환하라.
 Python 변경이면 tests에 최소한 py_compile 검증 명령을 포함하라.
+가능하면 plan.summary에 변경 목적과 안전성 요약을 적고, limitations에는 남은 제약을 적어라.
 """.strip()
 
         result = Runner.run_sync(
@@ -414,6 +433,30 @@ Python 변경이면 tests에 최소한 py_compile 검증 명령을 포함하라.
             return result
 
         return DevelopmentPlan.model_validate(result)
+
+    def _validate_plan(self, plan: DevelopmentPlan) -> None:
+        if not plan.changes:
+            raise DevelopmentEngineError("수정 계획이 비어 있습니다.")
+
+        for change in plan.changes:
+            rel = change.relative_path.replace("\\", "/").lstrip("/")
+            if ".." in Path(rel).parts:
+                raise DevelopmentEngineError(f"허용되지 않는 파일 경로: {rel}")
+            lower = rel.lower()
+            if lower.startswith(".git/") or "/.git/" in lower:
+                raise DevelopmentEngineError(f".git 내부 파일 수정은 금지됩니다: {rel}")
+            if any(
+                forbidden in lower
+                for forbidden in (
+                    ".env",
+                    "credentials.json",
+                    "token",
+                    "client_secret.json",
+                )
+            ):
+                raise DevelopmentEngineError(f"비밀정보 파일 수정은 금지됩니다: {rel}")
+            if change.action.lower() not in {"create", "modify"}:
+                raise DevelopmentEngineError(f"지원하지 않는 변경 action 입니다: {change.action}")
 
     def _find_candidate_files(
         self,
@@ -433,6 +476,7 @@ Python 변경이면 tests에 최소한 py_compile 검증 명령을 포함하라.
             "AgentsSDK/workflow_manager.py",
             "AgentsSDK/worker_controller.py",
             "AgentsSDK/runtime.py",
+            "AgentsSDK/development_engine.py",
             "core/workflow.py",
             "core/approval_manager.py",
         ]
@@ -446,6 +490,7 @@ Python 변경이면 tests에 최소한 py_compile 검증 명령을 포함하라.
             "generated_projects",
             ".venv",
             "venv",
+            ".devengine_backups",
         }
 
         for path in self.repo_root.rglob("*.py"):
@@ -506,22 +551,21 @@ Python 변경이면 tests에 최소한 py_compile 검증 명령을 포함하라.
         changes: list[FileChange],
     ) -> list[str]:
         changed: list[str] = []
-        forbidden = (
-            ".env",
-            "credentials.json",
-            "token",
-            ".git/",
-        )
 
         for change in changes:
             rel = change.relative_path.replace("\\", "/").lstrip("/")
 
-            if ".." in Path(rel).parts or any(item in rel.lower() for item in forbidden):
+            if ".." in Path(rel).parts:
+                raise DevelopmentEngineError(f"허용되지 않는 파일 경로: {rel}")
+            lower = rel.lower()
+            if lower.startswith(".git/") or "/.git/" in lower:
+                raise DevelopmentEngineError(f".git 내부 파일 수정은 금지됩니다: {rel}")
+            if any(item in lower for item in (".env", "credentials.json", "token")):
                 raise DevelopmentEngineError(f"허용되지 않는 파일 경로: {rel}")
 
             target = (self.repo_root / rel).resolve()
 
-            if self.repo_root not in target.parents:
+            if self.repo_root not in target.parents and target != self.repo_root:
                 raise DevelopmentEngineError(
                     f"저장소 밖 파일 수정 차단: {rel}"
                 )
@@ -578,7 +622,6 @@ Python 변경이면 tests에 최소한 py_compile 검증 명령을 포함하라.
         skipped: list[str] = []
 
         python_executable = os.environ.get("PYTHON", "py")
-
         python_files = [file for file in changed_files if file.endswith(".py")]
 
         if python_files:
@@ -658,6 +701,13 @@ Python 변경이면 tests에 최소한 py_compile 검증 명령을 포함하라.
         if not (self.repo_root / ".git").exists():
             raise DevelopmentEngineError(
                 "Git 저장소가 연결되어 있지 않습니다."
+            )
+
+    def _ensure_clean_worktree(self) -> None:
+        status = self._git(["status", "--porcelain"], check=False)
+        if status["stdout"].strip():
+            raise DevelopmentEngineError(
+                "작업 폴더에 커밋되지 않은 변경사항이 있습니다."
             )
 
     def _current_branch(self) -> str:
