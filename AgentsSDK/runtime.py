@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import socket
 import subprocess
 import sys
 import time
@@ -35,7 +36,7 @@ class RuntimeProcessState:
 
 
 class BusinessAIRuntime:
-    """운영 엔진과 개발 엔진을 분리하는 Business AI OS 실행 라우터."""
+    """운영 엔진과 개발 엔지�� 분리하는 Business AI OS 실행 라우터."""
 
     DEVELOPMENT_ENGINE_NAME = "development_engine_v2"
     DEVELOPMENT_MANAGER_ID = "development_engine"
@@ -242,7 +243,7 @@ class BusinessAIRuntime:
         self,
         workflow_id: str,
         *,
-        hq_entrypoint: str = "business_ai_hq.py",
+        hq_entrypoint: str = "AgentsSDK/business_ai_hq.py",
         streamlit_port: int = 8501,
     ) -> dict[str, Any]:
         state = self._create_restart_state(workflow_id, hq_entrypoint, streamlit_port)
@@ -289,6 +290,12 @@ class BusinessAIRuntime:
             state["restore_result"] = restore_result
             state["status"] = "failed"
             state["failure_reason"] = str(exc)
+            state["runtime_monitor"] = {
+                "visible_reason": str(exc),
+                "stage": state.get("stage", ""),
+                "validation_result": state.get("validation_result", {}),
+                "start_result": state.get("start_result", {}),
+            }
             state["completed_at"] = self._now()
             self._save_runtime_state(workflow_id, state)
             raise
@@ -757,16 +764,33 @@ print(json.dumps({"pid": None, "creation_time": "", "command": "", "working_dire
         if not entrypoint.exists():
             raise FileNotFoundError(f"실행 파일을 찾을 수 없습니다: {entrypoint}")
         cmd = [sys.executable, "-m", "streamlit", "run", str(entrypoint), "--server.port", str(streamlit_port), "--server.address", "127.0.0.1"]
-        proc = subprocess.Popen(cmd, cwd=REPO_ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0))
+        proc = subprocess.Popen(cmd, cwd=entrypoint.parent, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0))
         time.sleep(8)
-        return {"started": True, "pid": proc.pid, "command": cmd, "entrypoint": str(entrypoint)}
+        return {"started": True, "pid": proc.pid, "command": cmd, "entrypoint": str(entrypoint), "working_directory": str(entrypoint.parent)}
 
     def _validate_business_ai_hq(self, hq_entrypoint: str, streamlit_port: int) -> dict[str, Any]:
         entrypoint = (REPO_ROOT / hq_entrypoint).resolve()
         compile_result = subprocess.run([sys.executable, "-m", "py_compile", str(entrypoint)], cwd=REPO_ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=60, check=False)
         if compile_result.returncode != 0:
             return {"passed": False, "reason": compile_result.stderr.strip() or compile_result.stdout.strip() or "py_compile 실패"}
-        return {"passed": True, "reason": "business_ai_hq.py py_compile OK", "port": streamlit_port}
+
+        if not self._check_local_port("127.0.0.1", streamlit_port, timeout=20):
+            return {
+                "passed": False,
+                "reason": f"127.0.0.1:{streamlit_port} 접속 확인에 실패했습니다.",
+                "port": streamlit_port,
+            }
+        return {"passed": True, "reason": "business_ai_hq.py py_compile OK 및 Streamlit 접속 확인 완료", "port": streamlit_port}
+
+    def _check_local_port(self, host: str, port: int, *, timeout: int = 10) -> bool:
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            try:
+                with socket.create_connection((host, port), timeout=2):
+                    return True
+            except OSError:
+                time.sleep(1)
+        return False
 
     def _stop_process_tree(self, pid: int) -> dict[str, Any]:
         script = f"""
@@ -804,9 +828,15 @@ except Exception as exc:
             return {"restored": False, "reason": "no_previous_process"}
         return self._stop_process_tree(int(pid))
 
+    def _atomic_write_json(self, path: Path, data: dict[str, Any]) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp_path = path.with_suffix(path.suffix + f".{uuid.uuid4().hex}.tmp")
+        tmp_path.write_text(json.dumps(data, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
+        os.replace(tmp_path, path)
+
     def _save_runtime_state(self, workflow_id: str, state: dict[str, Any]) -> None:
         path = RUNTIME_STATE_DIR / f"{workflow_id}.json"
-        path.write_text(json.dumps(state, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
+        self._atomic_write_json(path, state)
 
     def _load_runtime_state(self, workflow_id: str) -> dict[str, Any] | None:
         path = RUNTIME_STATE_DIR / f"{workflow_id}.json"
