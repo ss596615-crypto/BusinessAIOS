@@ -47,13 +47,12 @@ class BootstrapEngine:
     7. 대표 승인 후 Git Push
     8. 기존 stash 자동 복원
     9. 충돌 발생 시 자동 중단 및 보고
+    10. Push 후 Runtime 자동 재시작 및 검증
     """
 
     ENGINE_NAME = "bootstrap_engine_v1"
     DEVELOPMENT_BRANCH = "ai-ceo-dev"
 
-    # Bootstrap Engine과 HQ가 실행 중 사라지지 않도록
-    # stash 대상에서 제외할 핵심 실행 파일
     PROTECTED_PATHS = (
         "AgentsSDK/bootstrap_engine.py",
         "AgentsSDK/runtime.py",
@@ -180,8 +179,6 @@ class BootstrapEngine:
                 repo_root=self.repo_root
             )
 
-            # Bootstrap Engine이 작업공간을 통제하므로
-            # 기존 Development Engine의 강제 중단 검사를 우회한다.
             engine._ensure_clean_worktree = (
                 lambda: None
             )
