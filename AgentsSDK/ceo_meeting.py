@@ -3,6 +3,7 @@ Business AI OS V2
 ceo_meeting.py
 
 대표가 AI CEO와 대화하고 업무 지시·진행 확인·승인·반려·보고를 수행하는 운영 회의실.
+홈페이지 V1에서는 이 화면을 Business AI OS의 메인 랜딩/운영 대시보드로 사용한다.
 """
 
 from __future__ import annotations
@@ -20,6 +21,13 @@ st.set_page_config(
     page_title="Business AI OS - AI CEO 회의실",
     page_icon="🏢",
     layout="wide",
+)
+
+
+HERO_TITLE = "Business AI OS"
+HERO_SUBTITLE = (
+    "대표 지시를 AI CEO가 분석하고, 조직을 위임하며, "
+    "실행·승인·보고까지 연결하는 운영 홈페이지 V1"
 )
 
 
@@ -91,7 +99,7 @@ def format_ceo_start_report(result: dict[str, Any]) -> str:
         f"- 업무 유형: {result.get('business_type', '-')}",
         f"- 실행 엔진: {result.get('execution_engine', '-')}",
         f"- 담당 지점장: {manager.get('role', '-')}",
-        f"- 배정 직원: {len(worker_ids)}명",
+        f"- 배정 직원: {len(worker_ids)}명", 
         f"- 현재 상태: {result.get('status', '-')}",
         f"- 승인 상태: {result.get('approval_status', '-')}",
     ]
@@ -127,8 +135,8 @@ if "last_instruction" not in st.session_state:
     st.session_state.last_instruction = ""
 
 
-st.title("🏢 Business AI OS")
-st.subheader("대표 ↔ AI CEO 운영 회의실")
+st.title(f"🏢 {HERO_TITLE}")
+st.subheader(HERO_SUBTITLE)
 st.caption(
     "대표는 목표·아이디어·수정 지시를 입력하고, "
     "AI CEO는 분석·위임·실행·보고·승인 요청을 처리합니다."
@@ -137,6 +145,22 @@ st.caption(
 workflows = refresh_workflows()
 current_workflow = get_workflow_safe(st.session_state.current_workflow_id)
 current_progress = get_progress_safe(st.session_state.current_workflow_id)
+
+hero_col1, hero_col2 = st.columns([2, 1])
+with hero_col1:
+    st.markdown(
+        """
+### 홈페이지 V1 핵심 기능
+- 기존 회사 자산 기반 AI CEO 운영
+- 개발 업무는 Development Engine V2로 자동 라우팅
+- 승인 대기/반려/보고를 한 화면에서 처리
+- 최근 Workflow와 실행 상태를 즉시 확인
+"""
+    )
+with hero_col2:
+    st.markdown("### 바로가기")
+    st.page_link("AgentsSDK/ceo_meeting.py", label="AI CEO 회의실")
+    st.write("현재 메인 화면: 홈페이지 V1")
 
 col1, col2, col3, col4 = st.columns(4)
 with col1:
@@ -193,7 +217,7 @@ if send_clicked:
                 lines = [
                     "기존 Workflow를 신규 생성 없이 처리했습니다.",
                     f"- Workflow: {workflow_id}",
-                    f"- 처리: {result.get('existing_workflow_action', '-')}",
+                    f"- 처리: {result.get('existing_workflow_action', '-')} ",
                     f"- 상태: {workflow.get('status', '-')}",
                     f"- 신규 Workflow 생성: 아니오",
                 ]
@@ -232,7 +256,7 @@ if current_workflow is None:
 else:
     wf_col1, wf_col2 = st.columns([2, 1])
     with wf_col1:
-        st.markdown(f"**프로젝트:** {current_workflow.get('title', '-')}")
+        st.markdown(f"**프로젝트:** {current_workflow.get('title', '-')} ")
         st.markdown(f"**목표:** {current_workflow.get('objective', '-')}")
         st.markdown(f"**Workflow ID:** {current_workflow.get('workflow_id', '-')}")
         st.markdown(f"**지점장:** {current_workflow.get('manager_agent_id') or '-'}")
@@ -374,6 +398,6 @@ else:
 
 st.divider()
 st.caption(
-    "현재 버전은 로컬 Business AI OS Runtime과 직접 연결됩니다. "
-    "이후 최종 운영 홈페이지 내부 메뉴로 통합할 수 있습니다."
+    "Business AI OS 홈페이지 V1은 로컬 Runtime과 직접 연결됩니다. "
+    "대표 승인 후 기존 Workflow 재개 및 Git Push 흐름과 호환됩니다."
 )
