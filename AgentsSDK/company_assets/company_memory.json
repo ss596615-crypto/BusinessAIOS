@@ -2847,6 +2847,174 @@
       "approved": true,
       "created_at": "2026-07-10T10:42:43.189601+00:00",
       "updated_at": "2026-07-10T10:42:43.189601+00:00"
+    },
+    {
+      "memory_id": "mem_7541774342734499",
+      "category": "owner_instruction",
+      "title": "Workflow 지시: HQ 자동 새로고침 기능을 다시 개발하라. 중요 조건 1. runtime.py 전체 파일을 절대 생략하거나 \"# ... truncated ...\"로 저장하지 않는다. 2. 기존 runtime.py 전체 구조와 공개 API를 유지한다. 3. 필요한 부분만 수정하되, 저장 파일은 항상 전체 완성본이어야 한다. 4. 수정 전 runtime.py 전체 백업을 생성한다. 5. 수정 후 아래 테스트를 반드시 통과한다. - py -m py_compile AgentsSDK/runtime.py - py -c \"from runtime import runtime; print(runtime._now())\" - py -m py_compile AgentsSDK/business_ai_hq.py 6. 테스트 실패 시 자동 복구하고 Commit하지 않는다. 기능 요구사항 1. Runtime 재시작 완료 후 HQ를 자동 새로고침한다. 2. 현재 Workflow 상태를 자동 재조회한다. 3. 새로고침 중 \"시스템을 업데이트하는 중입니다.\"를 표시한다. 4. 실패 시 자동 재시도한다. 5. 성공 시 completed 상태를 표시한다. 6. 자동 테스트 후 Git Commit한다. 7. 대표 승인 대기 후 Git Push한다.",
+      "content": "HQ 자동 새로고침 기능을 다시 개발하라. 중요 조건 1. runtime.py 전체 파일을 절대 생략하거나 \"# ... truncated ...\"로 저장하지 않는다. 2. 기존 runtime.py 전체 구조와 공개 API를 유지한다. 3. 필요한 부분만 수정하되, 저장 파일은 항상 전체 완성본이어야 한다. 4. 수정 전 runtime.py 전체 백업을 생성한다. 5. 수정 후 아래 테스트를 반드시 통과한다. - py -m py_compile AgentsSDK/runtime.py - py -c \"from runtime import runtime; print(runtime._now())\" - py -m py_compile AgentsSDK/business_ai_hq.py 6. 테스트 실패 시 자동 복구하고 Commit하지 않는다. 기능 요구사항 1. Runtime 재시작 완료 후 HQ를 자동 새로고침한다. 2. 현재 Workflow 상태를 자동 재조회한다. 3. 새로고침 중 \"시스템을 업데이트하는 중입니다.\"를 표시한다. 4. 실패 시 자동 재시도한다. 5. 성공 시 completed 상태를 표시한다. 6. 자동 테스트 후 Git Commit한다. 7. 대표 승인 대기 후 Git Push한다.",
+      "source": "owner",
+      "source_agent_id": null,
+      "project_id": null,
+      "related_agent_ids": [],
+      "tags": [
+        "workflow",
+        "wf_30bc2a9e61be4bdc",
+        "HQ 자동 새로고침 기능을 다시 개발하라. 중요 조건 1. runtime.py 전체 파일을 절대 생략하거나 \"# ... truncated ...\"로 저장하지 않는다. 2. 기존 runtime.py 전체 구조와 공개 API를 유지한다. 3. 필요한 부분만 수정하되, 저장 파일은 항상 전체 완성본이어야 한다. 4. 수정 전 runtime.py 전체 백업을 생성한다. 5. 수정 후 아래 테스트를 반드시 통과한다. - py -m py_compile AgentsSDK/runtime.py - py -c \"from runtime import runtime; print(runtime._now())\" - py -m py_compile AgentsSDK/business_ai_hq.py 6. 테스트 실패 시 자동 복구하고 Commit하지 않는다. 기능 요구사항 1. Runtime 재시작 완료 후 HQ를 자동 새로고침한다. 2. 현재 Workflow 상태를 자동 재조회한다. 3. 새로고침 중 \"시스템을 업데이트하는 중입니다.\"를 표시한다. 4. 실패 시 자동 재시도한다. 5. 성공 시 completed 상태를 표시한다. 6. 자동 테스트 후 Git Commit한다. 7. 대표 승인 대기 후 Git Push한다."
+      ],
+      "importance": 5,
+      "status": "active",
+      "reusable": true,
+      "approved": true,
+      "created_at": "2026-07-12T23:47:41.582154+00:00",
+      "updated_at": "2026-07-12T23:47:41.582154+00:00"
+    },
+    {
+      "memory_id": "mem_b7240b9a8a9e46cc",
+      "category": "owner_instruction",
+      "title": "Workflow 지시: Business AI OS 공식 홈페이지의 기본 화면을 개발하라. 요구사항: 1. 회사 소개 2. AI CEO 운영 구조 3. 대표 지시와 승인 중심 운영 방식 4. 주요 기능 소개 5. 문의 영역 6. 반응형 화면 7. 실행 테스트 8. 변경 파일과 테스트 결과 보고",
+      "content": "Business AI OS 공식 홈페이지의 기본 화면을 개발하라. 요구사항: 1. 회사 소개 2. AI CEO 운영 구조 3. 대표 지시와 승인 중심 운영 방식 4. 주요 기능 소개 5. 문의 영역 6. 반응형 화면 7. 실행 테스트 8. 변경 파일과 테스트 결과 보고",
+      "source": "owner",
+      "source_agent_id": null,
+      "project_id": null,
+      "related_agent_ids": [],
+      "tags": [
+        "workflow",
+        "wf_3479f59df61f4356",
+        "Business AI OS 공식 홈페이지의 기본 화면을 개발하라. 요구사항: 1. 회사 소개 2. AI CEO 운영 구조 3. 대표 지시와 승인 중심 운영 방식 4. 주요 기능 소개 5. 문의 영역 6. 반응형 화면 7. 실행 테스트 8. 변경 파일과 테스트 결과 보고"
+      ],
+      "importance": 5,
+      "status": "active",
+      "reusable": true,
+      "approved": true,
+      "created_at": "2026-07-13T01:06:36.101787+00:00",
+      "updated_at": "2026-07-13T01:06:36.101787+00:00"
+    },
+    {
+      "memory_id": "mem_bdda59a4f8dd43b1",
+      "category": "owner_instruction",
+      "title": "Workflow 지시: AI CEO 운영 모드 : 실행 모드 Business AI OS 공식 홈페이지를 개발하라. 기존 회사 자산을 먼저 확인하고 재사용 가능한 구성은 최대한 활용한다. 다음 기능을 포함한다. 1. 회사 소개 2. AI CEO 소개 3. Business AI OS 소개 4. 주요 기능 5. AI 조직도 6. 대표 지시 및 승인 구조 7. 문의하기 8. 관리자 로그인 Development Engine V2를 사용하여 개발을 수행하고, 변경 파일, 테스트 결과, Git Commit 결과를 보고한 후 대표 승인 시 Git Push를 수행하라.",
+      "content": "AI CEO 운영 모드 : 실행 모드 Business AI OS 공식 홈페이지를 개발하라. 기존 회사 자산을 먼저 확인하고 재사용 가능한 구성은 최대한 활용한다. 다음 기능을 포함한다. 1. 회사 소개 2. AI CEO 소개 3. Business AI OS 소개 4. 주요 기능 5. AI 조직도 6. 대표 지시 및 승인 구조 7. 문의하기 8. 관리자 로그인 Development Engine V2를 사용하여 개발을 수행하고, 변경 파일, 테스트 결과, Git Commit 결과를 보고한 후 대표 승인 시 Git Push를 수행하라.",
+      "source": "owner",
+      "source_agent_id": null,
+      "project_id": null,
+      "related_agent_ids": [],
+      "tags": [
+        "workflow",
+        "wf_ce8a811bab3e4529",
+        "AI CEO 운영 모드 : 실행 모드 Business AI OS 공식 홈페이지를 개발하라. 기존 회사 자산을 먼저 확인하고 재사용 가능한 구성은 최대한 활용한다. 다음 기능을 포함한다. 1. 회사 소개 2. AI CEO 소개 3. Business AI OS 소개 4. 주요 기능 5. AI 조직도 6. 대표 지시 및 승인 구조 7. 문의하기 8. 관리자 로그인 Development Engine V2를 사용하여 개발을 수행하고, 변경 파일, 테스트 결과, Git Commit 결과를 보고한 후 대표 승인 시 Git Push를 수행하라."
+      ],
+      "importance": 5,
+      "status": "active",
+      "reusable": true,
+      "approved": true,
+      "created_at": "2026-07-13T01:08:33.268202+00:00",
+      "updated_at": "2026-07-13T01:08:33.268202+00:00"
+    },
+    {
+      "memory_id": "mem_40c78a2d34d347f0",
+      "category": "owner_instruction",
+      "title": "Workflow 지시: AI CEO 운영 모드 : 실행 모드 현재 runtime.py의 report() 함수가 Workflow 상태를 최상위 필드로 반환하지 않아 HQ에서 상태와 승인 정보가 None으로 표시되고 있다. 다음 작업을 수행하라. 1. runtime.py의 def report(...) 전체를 수정한다. 2. ceo_controller.report(workflow_id)의 workflow와 progress 값을 읽는다. 3. 다음 필드를 report() 반환값 최상위에 포함한다. - workflow_id - status - approval_status - business_type - analysis_summary - manager - next_action - progress 4. 기존 execution_engine, development_mode, engine_status, development_result, ceo_report 필드는 유지한다. 5. 기존 공개 API는 변경하지 않는다. 6. 수정 전 자동 백업한다. 7. py -m py_compile runtime.py 테스트를 수행한다. 8. 테스트 실패 시 자동 복구한다. 9. 변경 파일과 테스트 결과를 보고한다. 10. 대표 승인 후 Git Push를 수행한다.",
+      "content": "AI CEO 운영 모드 : 실행 모드 현재 runtime.py의 report() 함수가 Workflow 상태를 최상위 필드로 반환하지 않아 HQ에서 상태와 승인 정보가 None으로 표시되고 있다. 다음 작업을 수행하라. 1. runtime.py의 def report(...) 전체를 수정한다. 2. ceo_controller.report(workflow_id)의 workflow와 progress 값을 읽는다. 3. 다음 필드를 report() 반환값 최상위에 포함한다. - workflow_id - status - approval_status - business_type - analysis_summary - manager - next_action - progress 4. 기존 execution_engine, development_mode, engine_status, development_result, ceo_report 필드는 유지한다. 5. 기존 공개 API는 변경하지 않는다. 6. 수정 전 자동 백업한다. 7. py -m py_compile runtime.py 테스트를 수행한다. 8. 테스트 실패 시 자동 복구한다. 9. 변경 파일과 테스트 결과를 보고한다. 10. 대표 승인 후 Git Push를 수행한다.",
+      "source": "owner",
+      "source_agent_id": null,
+      "project_id": null,
+      "related_agent_ids": [],
+      "tags": [
+        "workflow",
+        "wf_658ba1185ecf4bf7",
+        "AI CEO 운영 모드 : 실행 모드 현재 runtime.py의 report() 함수가 Workflow 상태를 최상위 필드로 반환하지 않아 HQ에서 상태와 승인 정보가 None으로 표시되고 있다. 다음 작업을 수행하라. 1. runtime.py의 def report(...) 전체를 수정한다. 2. ceo_controller.report(workflow_id)의 workflow와 progress 값을 읽는다. 3. 다음 필드를 report() 반환값 최상위에 포함한다. - workflow_id - status - approval_status - business_type - analysis_summary - manager - next_action - progress 4. 기존 execution_engine, development_mode, engine_status, development_result, ceo_report 필드는 유지한다. 5. 기존 공개 API는 변경하지 않는다. 6. 수정 전 자동 백업한다. 7. py -m py_compile runtime.py 테스트를 수행한다. 8. 테스트 실패 시 자동 복구한다. 9. 변경 파일과 테스트 결과를 보고한다. 10. 대표 승인 후 Git Push를 수행한다."
+      ],
+      "importance": 5,
+      "status": "active",
+      "reusable": true,
+      "approved": true,
+      "created_at": "2026-07-13T01:09:44.427661+00:00",
+      "updated_at": "2026-07-13T01:09:44.427661+00:00"
+    },
+    {
+      "memory_id": "mem_2d6c2024d8144e72",
+      "category": "owner_instruction",
+      "title": "Workflow 지시: AI CEO 운영 모드 : 실행 모드 Business AI OS 홈페이지 V1을 개발하라. 기존 회사 자산을 먼저 분석한다. Development Engine V2를 사용한다. 변경 파일과 테스트 결과를 보고한다. 대표 승인 후 Git Push를 수행한다.",
+      "content": "AI CEO 운영 모드 : 실행 모드 Business AI OS 홈페이지 V1을 개발하라. 기존 회사 자산을 먼저 분석한다. Development Engine V2를 사용한다. 변경 파일과 테스트 결과를 보고한다. 대표 승인 후 Git Push를 수행한다.",
+      "source": "owner",
+      "source_agent_id": null,
+      "project_id": null,
+      "related_agent_ids": [],
+      "tags": [
+        "workflow",
+        "wf_ec943ac96ba74e6c",
+        "AI CEO 운영 모드 : 실행 모드 Business AI OS 홈페이지 V1을 개발하라. 기존 회사 자산을 먼저 분석한다. Development Engine V2를 사용한다. 변경 파일과 테스트 결과를 보고한다. 대표 승인 후 Git Push를 수행한다."
+      ],
+      "importance": 5,
+      "status": "active",
+      "reusable": true,
+      "approved": true,
+      "created_at": "2026-07-13T01:14:52.938520+00:00",
+      "updated_at": "2026-07-13T01:14:52.938520+00:00"
+    },
+    {
+      "memory_id": "mem_f9fb16490851469f",
+      "category": "approval",
+      "title": "Workflow 승인: AI CEO 운영 모드 : 실행 모드 Business AI OS 홈페이지 V1을 개발하라. 기존 회사 자산을 먼저 분석한다. Development Engine V2를 사용한다. 변경 파일과 테스트 결과를 보고한다. 대표 승인 후 Git Push를 수행한다.",
+      "content": "대표 승인",
+      "source": "owner",
+      "source_agent_id": "ceo_001",
+      "project_id": null,
+      "related_agent_ids": [],
+      "tags": [
+        "workflow",
+        "wf_2796201bbcdd461b",
+        "승인"
+      ],
+      "importance": 5,
+      "status": "active",
+      "reusable": true,
+      "approved": true,
+      "created_at": "2026-07-13T01:32:30.424029+00:00",
+      "updated_at": "2026-07-13T01:32:30.424029+00:00"
+    },
+    {
+      "memory_id": "mem_4948d07b53584225",
+      "category": "agent_result",
+      "title": "Workflow 결과: AI CEO 운영 모드 : 실행 모드 Business AI OS 홈페이지 V1을 개발하라. 기존 회사 자산을 먼저 분석한다. Development Engine V2를 사용한다. 변경 파일과 테스트 결과를 보고한다. 대표 승인 후 Git Push를 수행한다.",
+      "content": "Workflow 'AI CEO 운영 모드 : 실행 모드 Business AI OS 홈페이지 V1을 개발하라. 기존 회사 자산을 먼저 분석한다. Development Engine V2를 사용한다. 변경 파일과 테스트 결과를 보고한다. 대표 승인 후 Git Push를 수행한다.'의 4개 단계가 완료되었다. 목표: AI CEO 운영 모드 : 실행 모드 Business AI OS 홈페이지 V1을 개발하라. 기존 회사 자산을 먼저 분석한다. Development Engine V2를 사용한다. 변경 파일과 테스트 결과를 보고한다. 대표 승인 후 Git Push를 수행한다.",
+      "source": "agent",
+      "source_agent_id": "ceo_001",
+      "project_id": null,
+      "related_agent_ids": [],
+      "tags": [
+        "workflow",
+        "wf_2796201bbcdd461b",
+        "업무결과"
+      ],
+      "importance": 4,
+      "status": "active",
+      "reusable": true,
+      "approved": true,
+      "created_at": "2026-07-13T01:32:30.567123+00:00",
+      "updated_at": "2026-07-13T01:32:30.567123+00:00"
+    },
+    {
+      "memory_id": "mem_f4b9b379ba2742b3",
+      "category": "next_action",
+      "title": "다음 업무: AI CEO 운영 모드 : 실행 모드 Business AI OS 홈페이지 V1을 개발하라. 기존 회사 자산을 먼저 분석한다. Development Engine V2를 사용한다. 변경 파일과 테스트 결과를 보고한다. 대표 승인 후 Git Push를 수행한다.",
+      "content": "대표의 다음 지시 또는 후속 Workflow 생성을 대기한다.",
+      "source": "system",
+      "source_agent_id": "ceo_001",
+      "project_id": null,
+      "related_agent_ids": [],
+      "tags": [
+        "workflow",
+        "wf_2796201bbcdd461b",
+        "다음업무"
+      ],
+      "importance": 4,
+      "status": "active",
+      "reusable": true,
+      "approved": true,
+      "created_at": "2026-07-13T01:32:30.703558+00:00",
+      "updated_at": "2026-07-13T01:32:30.703558+00:00"
     }
   ]
 }

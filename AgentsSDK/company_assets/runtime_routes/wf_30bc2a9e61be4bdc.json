@@ -1,0 +1,31 @@
+{
+  "workflow_id": "wf_30bc2a9e61be4bdc",
+  "title": "HQ 자동 새로고침 기능을 다시 개발하라.\n\n중요 조건\n\n1. runtime.py 전체 파일을 절대 생략하거나 \"# ... truncated ...\"로 저장하지 않는다.\n2. 기존 runtime.py 전체 구조와 공개 API를 유지한다.\n3. 필요한 부분만 수정하되, 저장 파일은 항상 전체 완성본이어야 한다.\n4. 수정 전 runtime.py 전체 백업을 생성한다.\n5. 수정 후 아래 테스트를 반드시 통과한다.\n   - py -m py_compile AgentsSDK/runtime.py\n   - py -c \"from runtime import runtime; print(runtime._now())\"\n   - py -m py_compile AgentsSDK/business_ai_hq.py\n6. 테스트 실패 시 자동 복구하고 Commit하지 않는다.\n\n기능 요구사항\n\n1. Runtime 재시작 완료 후 HQ를 자동 새로고침한다.\n2. 현재 Workflow 상태를 자동 재조회한다.\n3. 새로고침 중 \"시스템을 업데이트하는 중입니다.\"를 표시한다.\n4. 실패 시 자동 재시도한다.\n5. 성공 시 completed 상태를 표시한다.\n6. 자동 테스트 후 Git Commit한다.\n7. 대표 승인 대기 후 Git Push한다.",
+  "objective": "HQ 자동 새로고침 기능을 다시 개발하라.\n\n중요 조건\n\n1. runtime.py 전체 파일을 절대 생략하거나 \"# ... truncated ...\"로 저장하지 않는다.\n2. 기존 runtime.py 전체 구조와 공개 API를 유지한다.\n3. 필요한 부분만 수정하되, 저장 파일은 항상 전체 완성본이어야 한다.\n4. 수정 전 runtime.py 전체 백업을 생성한다.\n5. 수정 후 아래 테스트를 반드시 통과한다.\n   - py -m py_compile AgentsSDK/runtime.py\n   - py -c \"from runtime import runtime; print(runtime._now())\"\n   - py -m py_compile AgentsSDK/business_ai_hq.py\n6. 테스트 실패 시 자동 복구하고 Commit하지 않는다.\n\n기능 요구사항\n\n1. Runtime 재시작 완료 후 HQ를 자동 새로고침한다.\n2. 현재 Workflow 상태를 자동 재조회한다.\n3. 새로고침 중 \"시스템을 업데이트하는 중입니다.\"를 표시한다.\n4. 실패 시 자동 재시도한다.\n5. 성공 시 completed 상태를 표시한다.\n6. 자동 테스트 후 Git Commit한다.\n7. 대표 승인 대기 후 Git Push한다.",
+  "owner_instruction": "HQ 자동 새로고침 기능을 다시 개발하라.\n\n중요 조건\n\n1. runtime.py 전체 파일을 절대 생략하거나 \"# ... truncated ...\"로 저장하지 않는다.\n2. 기존 runtime.py 전체 구조와 공개 API를 유지한다.\n3. 필요한 부분만 수정하되, 저장 파일은 항상 전체 완성본이어야 한다.\n4. 수정 전 runtime.py 전체 백업을 생성한다.\n5. 수정 후 아래 테스트를 반드시 통과한다.\n   - py -m py_compile AgentsSDK/runtime.py\n   - py -c \"from runtime import runtime; print(runtime._now())\"\n   - py -m py_compile AgentsSDK/business_ai_hq.py\n6. 테스트 실패 시 자동 복구하고 Commit하지 않는다.\n\n기능 요구사항\n\n1. Runtime 재시작 완료 후 HQ를 자동 새로고침한다.\n2. 현재 Workflow 상태를 자동 재조회한다.\n3. 새로고침 중 \"시스템을 업데이트하는 중입니다.\"를 표시한다.\n4. 실패 시 자동 재시도한다.\n5. 성공 시 completed 상태를 표시한다.\n6. 자동 테스트 후 Git Commit한다.\n7. 대표 승인 대기 후 Git Push한다.",
+  "project_id": null,
+  "execution_engine": "development_engine_v2",
+  "development_mode": true,
+  "worker_agent_id": "development_engine",
+  "workflow_snapshot": {
+    "workflow_id": "wf_30bc2a9e61be4bdc",
+    "status": "failed",
+    "approval_status": "pending",
+    "business_type": "development_engine",
+    "analysis_summary": "개발 업무로 판정하여 일반 지점장/Worker를 우회하고 Development Engine V2를 기본 실행 엔진으로 호출했습니다.",
+    "manager": {
+      "agent_id": "development_engine",
+      "name": "Development_Engine",
+      "role": "AI 개발 실행 엔진"
+    },
+    "managers": [],
+    "workers": [
+      "development_engine"
+    ],
+    "worker_selection_owner": "development_engine",
+    "execution_engine": "development_engine_v2",
+    "development_mode": true
+  },
+  "created_at": "2026-07-12T23:47:42.048211+00:00",
+  "updated_at": "2026-07-12T23:47:42.048223+00:00"
+}

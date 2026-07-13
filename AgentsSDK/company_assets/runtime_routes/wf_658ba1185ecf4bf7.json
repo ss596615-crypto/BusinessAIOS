@@ -1,0 +1,31 @@
+{
+  "workflow_id": "wf_658ba1185ecf4bf7",
+  "title": "AI CEO\n\n운영 모드 : 실행 모드\n\n현재 runtime.py의 report() 함수가 Workflow 상태를 최상위 필드로 반환하지 않아 HQ에서 상태와 승인 정보가 None으로 표시되고 있다.\n\n다음 작업을 수행하라.\n\n1. runtime.py의 def report(...) 전체를 수정한다.\n2. ceo_controller.report(workflow_id)의 workflow와 progress 값을 읽는다.\n3. 다음 필드를 report() 반환값 최상위에 포함한다.\n   - workflow_id\n   - status\n   - approval_status\n   - business_type\n   - analysis_summary\n   - manager\n   - next_action\n   - progress\n4. 기존 execution_engine, development_mode, engine_status, development_result, ceo_report 필드는 유지한다.\n5. 기존 공개 API는 변경하지 않는다.\n6. 수정 전 자동 백업한다.\n7. py -m py_compile runtime.py 테스트를 수행한다.\n8. 테스트 실패 시 자동 복구한다.\n9. 변경 파일과 테스트 결과를 보고한다.\n10. 대표 승인 후 Git Push를 수행한다.",
+  "objective": "AI CEO\n\n운영 모드 : 실행 모드\n\n현재 runtime.py의 report() 함수가 Workflow 상태를 최상위 필드로 반환하지 않아 HQ에서 상태와 승인 정보가 None으로 표시되고 있다.\n\n다음 작업을 수행하라.\n\n1. runtime.py의 def report(...) 전체를 수정한다.\n2. ceo_controller.report(workflow_id)의 workflow와 progress 값을 읽는다.\n3. 다음 필드를 report() 반환값 최상위에 포함한다.\n   - workflow_id\n   - status\n   - approval_status\n   - business_type\n   - analysis_summary\n   - manager\n   - next_action\n   - progress\n4. 기존 execution_engine, development_mode, engine_status, development_result, ceo_report 필드는 유지한다.\n5. 기존 공개 API는 변경하지 않는다.\n6. 수정 전 자동 백업한다.\n7. py -m py_compile runtime.py 테스트를 수행한다.\n8. 테스트 실패 시 자동 복구한다.\n9. 변경 파일과 테스트 결과를 보고한다.\n10. 대표 승인 후 Git Push를 수행한다.",
+  "owner_instruction": "AI CEO\n\n운영 모드 : 실행 모드\n\n현재 runtime.py의 report() 함수가 Workflow 상태를 최상위 필드로 반환하지 않아 HQ에서 상태와 승인 정보가 None으로 표시되고 있다.\n\n다음 작업을 수행하라.\n\n1. runtime.py의 def report(...) 전체를 수정한다.\n2. ceo_controller.report(workflow_id)의 workflow와 progress 값을 읽는다.\n3. 다음 필드를 report() 반환값 최상위에 포함한다.\n   - workflow_id\n   - status\n   - approval_status\n   - business_type\n   - analysis_summary\n   - manager\n   - next_action\n   - progress\n4. 기존 execution_engine, development_mode, engine_status, development_result, ceo_report 필드는 유지한다.\n5. 기존 공개 API는 변경하지 않는다.\n6. 수정 전 자동 백업한다.\n7. py -m py_compile runtime.py 테스트를 수행한다.\n8. 테스트 실패 시 자동 복구한다.\n9. 변경 파일과 테스트 결과를 보고한다.\n10. 대표 승인 후 Git Push를 수행한다.",
+  "project_id": null,
+  "execution_engine": "development_engine_v2",
+  "development_mode": true,
+  "worker_agent_id": "development_engine",
+  "workflow_snapshot": {
+    "workflow_id": "wf_658ba1185ecf4bf7",
+    "status": "waiting_approval",
+    "approval_status": "pending",
+    "business_type": "development_engine",
+    "analysis_summary": "개발 업무로 판정하여 일반 지점장/Worker를 우회하고 Development Engine V2를 기본 실행 엔진으로 호출했습니다.",
+    "manager": {
+      "agent_id": "development_engine",
+      "name": "Development_Engine",
+      "role": "AI 개발 실행 엔진"
+    },
+    "managers": [],
+    "workers": [
+      "development_engine"
+    ],
+    "worker_selection_owner": "development_engine",
+    "execution_engine": "development_engine_v2",
+    "development_mode": true
+  },
+  "created_at": "2026-07-13T01:09:44.926131+00:00",
+  "updated_at": "2026-07-13T01:09:44.926142+00:00"
+}

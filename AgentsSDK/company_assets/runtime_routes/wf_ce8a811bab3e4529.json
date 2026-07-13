@@ -1,0 +1,31 @@
+{
+  "workflow_id": "wf_ce8a811bab3e4529",
+  "title": "AI CEO\n\n운영 모드 : 실행 모드\n\nBusiness AI OS 공식 홈페이지를 개발하라.\n\n기존 회사 자산을 먼저 확인하고 재사용 가능한 구성은 최대한 활용한다.\n\n다음 기능을 포함한다.\n\n1. 회사 소개\n2. AI CEO 소개\n3. Business AI OS 소개\n4. 주요 기능\n5. AI 조직도\n6. 대표 지시 및 승인 구조\n7. 문의하기\n8. 관리자 로그인\n\nDevelopment Engine V2를 사용하여 개발을 수행하고,\n\n변경 파일, 테스트 결과, Git Commit 결과를 보고한 후\n\n대표 승인 시 Git Push를 수행하라.",
+  "objective": "AI CEO\n\n운영 모드 : 실행 모드\n\nBusiness AI OS 공식 홈페이지를 개발하라.\n\n기존 회사 자산을 먼저 확인하고 재사용 가능한 구성은 최대한 활용한다.\n\n다음 기능을 포함한다.\n\n1. 회사 소개\n2. AI CEO 소개\n3. Business AI OS 소개\n4. 주요 기능\n5. AI 조직도\n6. 대표 지시 및 승인 구조\n7. 문의하기\n8. 관리자 로그인\n\nDevelopment Engine V2를 사용하여 개발을 수행하고,\n\n변경 파일, 테스트 결과, Git Commit 결과를 보고한 후\n\n대표 승인 시 Git Push를 수행하라.",
+  "owner_instruction": "AI CEO\n\n운영 모드 : 실행 모드\n\nBusiness AI OS 공식 홈페이지를 개발하라.\n\n기존 회사 자산을 먼저 확인하고 재사용 가능한 구성은 최대한 활용한다.\n\n다음 기능을 포함한다.\n\n1. 회사 소개\n2. AI CEO 소개\n3. Business AI OS 소개\n4. 주요 기능\n5. AI 조직도\n6. 대표 지시 및 승인 구조\n7. 문의하기\n8. 관리자 로그인\n\nDevelopment Engine V2를 사용하여 개발을 수행하고,\n\n변경 파일, 테스트 결과, Git Commit 결과를 보고한 후\n\n대표 승인 시 Git Push를 수행하라.",
+  "project_id": null,
+  "execution_engine": "development_engine_v2",
+  "development_mode": true,
+  "worker_agent_id": "development_engine",
+  "workflow_snapshot": {
+    "workflow_id": "wf_ce8a811bab3e4529",
+    "status": "waiting_approval",
+    "approval_status": "pending",
+    "business_type": "development_engine",
+    "analysis_summary": "개발 업무로 판정하여 일반 지점장/Worker를 우회하고 Development Engine V2를 기본 실행 엔진으로 호출했습니다.",
+    "manager": {
+      "agent_id": "development_engine",
+      "name": "Development_Engine",
+      "role": "AI 개발 실행 엔진"
+    },
+    "managers": [],
+    "workers": [
+      "development_engine"
+    ],
+    "worker_selection_owner": "development_engine",
+    "execution_engine": "development_engine_v2",
+    "development_mode": true
+  },
+  "created_at": "2026-07-13T01:08:33.795414+00:00",
+  "updated_at": "2026-07-13T01:08:33.795425+00:00"
+}

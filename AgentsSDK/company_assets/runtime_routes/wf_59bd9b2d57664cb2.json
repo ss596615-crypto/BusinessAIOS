@@ -1,0 +1,31 @@
+{
+  "workflow_id": "wf_59bd9b2d57664cb2",
+  "title": "Development Engine V2.3를 개발하라.\n\nGit 작업공간 자동 관리 기능을 구현하라.",
+  "objective": "Development Engine V2.3를 개발하라.\n\nGit 작업공간 자동 관리 기능을 구현하라.",
+  "owner_instruction": "Development Engine V2.3를 개발하라.\n\nGit 작업공간 자동 관리 기능을 구현하라.",
+  "project_id": null,
+  "requested_by": "owner",
+  "business_type": "development_engine",
+  "execution_engine": "development_engine_v2",
+  "development_mode": true,
+  "manager": {
+    "agent_id": "development_engine",
+    "name": "Development_Engine",
+    "role": "AI 개발 실행 엔진"
+  },
+  "managers": [],
+  "workers": [],
+  "worker_agent_id": "development_engine",
+  "status": "completed",
+  "approval_status": "approved",
+  "approval_stage": "git_push",
+  "engine_status": "completed",
+  "analysis_summary": "개발 업무로 판정되어 일반 운영 지점장과 직원을 배정하지 않고 Development Engine V2에 전용 배정했습니다.",
+  "result_summary": "Git 작업공간 자동 관리 기능을 위해 Bootstrap Engine을 안정화하고, Development Engine을 Git 작업공간 상태 인지/복원 가능 구조로 보강합니다.",
+  "failure_reason": "",
+  "rejection_reason": "",
+  "next_action": "개발 및 Git 반영 완료",
+  "created_at": "2026-07-12T02:14:47.067925+00:00",
+  "updated_at": "2026-07-12T02:19:08.972528+00:00",
+  "completed_at": "2026-07-12T02:19:08.972536+00:00"
+}

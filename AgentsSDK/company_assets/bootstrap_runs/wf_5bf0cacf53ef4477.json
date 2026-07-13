@@ -1,0 +1,105 @@
+{
+  "workflow_id": "wf_5bf0cacf53ef4477",
+  "engine": "bootstrap_engine_v1",
+  "status": "waiting_git_push_approval",
+  "stash_created": true,
+  "stash_reference": "stash@{0}",
+  "stash_message": "Business AI OS Bootstrap wf_5bf0cacf53ef4477 76435e72",
+  "protected_paths": [
+    "AgentsSDK/bootstrap_engine.py",
+    "AgentsSDK/runtime.py",
+    "AgentsSDK/business_ai_hq.py",
+    "AgentsSDK/company_assets/bootstrap_runs/",
+    "AgentsSDK/company_assets/runtime_routes/",
+    "AgentsSDK/company_assets/development_runs/"
+  ],
+  "development_completed": true,
+  "push_completed": false,
+  "restore_completed": false,
+  "restore_conflict": false,
+  "failure_reason": "",
+  "created_at": "2026-07-12T23:11:16.591099+00:00",
+  "updated_at": "2026-07-12T23:11:55.503905+00:00",
+  "original_git_status": [
+    "?? AgentsSDK/business_ai_hq.py",
+    "?? AgentsSDK/company_assets/bootstrap_runs/",
+    "?? AgentsSDK/company_assets/development_runs/",
+    "?? AgentsSDK/company_assets/runtime_restart_runs/",
+    "?? AgentsSDK/company_assets/runtime_routes/",
+    "?? \"Business AI OS HQ.bat\""
+  ],
+  "stash_output": "Saved working directory and index state On ai-ceo-dev: Business AI OS Bootstrap wf_5bf0cacf53ef4477 76435e72\n",
+  "branch": "ai-ceo-dev",
+  "fetch_output": "From https://github.com/ss596615-crypto/BusinessAIOS\n * branch            ai-ceo-dev -> FETCH_HEAD\n",
+  "development_result": {
+    "workflow_id": "wf_5bf0cacf53ef4477",
+    "worker_agent_id": "development_engine",
+    "status": "completed",
+    "work_summary": "AI CEO Development Engine V2.3가 실제 코드를 수정하고 Git 작업공간 상태 점검, 백업, 자동 테스트, Git Commit을 완료했습니다.",
+    "result_summary": "runtime 재시작 경로를 AgentsSDK 기준으로 고정하고, 재시작 상태 저장을 원자적으로 처리하며, 접속 검증/실패 원인 기록을 추가합니다.",
+    "saved_files": [
+      "AgentsSDK/runtime.py"
+    ],
+    "permission_requests": [
+      {
+        "service": "GitHub",
+        "reason": "대표 승인 후 ai-ceo-dev 브랜치로 Push하기 위해 필요합니다.",
+        "requested_scope": "git push origin ai-ceo-dev",
+        "resume_action": "대표 승인 즉시 GitHub Push"
+      }
+    ],
+    "next_action": "대표 승인 후 GitHub Push",
+    "limitations": [
+      "실제 Runtime 재시작/접속 검증은 로컬 실행 환경과 Streamlit 설치 상태에 의존합니다.",
+      "Git commit과 대표 승인 대기는 이 응답 범위를 벗어나므로 후속 실행이 필요합니다."
+    ],
+    "development_evidence": {
+      "engine_version": "v2.3",
+      "branch": "ai-ceo-dev",
+      "git_fetch": "From https://github.com/ss596615-crypto/BusinessAIOS\n * branch            ai-ceo-dev -> FETCH_HEAD\n",
+      "candidate_files": [
+        "AgentsSDK/worker_controller.py",
+        "AgentsSDK/development_engine.py",
+        "AgentsSDK/bootstrap_engine.py",
+        "AgentsSDK/runtime.py",
+        "AgentsSDK/workflow_manager.py",
+        "development_engine_mvp.py",
+        "AgentsSDK/ceo_meeting.py",
+        "AgentsSDK/business_ai_hq.py",
+        "AgentsSDK/agent_factory.py",
+        "AgentsSDK/ceo_controller.py",
+        "AgentsSDK/company_memory.py",
+        "AgentsSDK/workflow_manager_old.py",
+        "core/workflow.py",
+        "core/approval_manager.py"
+      ],
+      "changed_files": [
+        "AgentsSDK/runtime.py"
+      ],
+      "backup_dir": "C:\\BusinessAIOS\\backup\\development_engine\\wf_5bf0cacf53ef4477_20260713_081154",
+      "tests": {
+        "passed": true,
+        "commands": [
+          "py -m py_compile AgentsSDK/runtime.py"
+        ],
+        "skipped": [
+          "pytest 미설치로 pytest 테스트를 건너뜀"
+        ],
+        "pytest_available": false,
+        "output": "$ py -m py_compile AgentsSDK/runtime.py\n\n\n[SKIPPED]\npytest 미설치로 pytest 테스트를 건너뜀"
+      },
+      "git_diff": "diff --git a/AgentsSDK/runtime.py b/AgentsSDK/runtime.py\nindex 377acd1..652333e 100644\n--- a/AgentsSDK/runtime.py\n+++ b/AgentsSDK/runtime.py\n@@ -3,6 +3,7 @@ from __future__ import annotations\n import json\n import os\n import re\n+import socket\n import subprocess\n import sys\n import time\n@@ -35,7 +36,7 @@ class RuntimeProcessState:\n \n \n class BusinessAIRuntime:\n-    \"\"\"운영 엔진과 개발 엔진을 분리하는 Business AI OS 실행 라우터.\"\"\"\n+    \"\"\"운영 엔진과 개발 엔지�� 분리하는 Business AI OS 실행 라우터.\"\"\"\n \n     DEVELOPMENT_ENGINE_NAME = \"development_engine_v2\"\n     DEVELOPMENT_MANAGER_ID = \"development_engine\"\n@@ -242,7 +243,7 @@ class BusinessAIRuntime:\n         self,\n         workflow_id: str,\n         *,\n-        hq_entrypoint: str = \"business_ai_hq.py\",\n+        hq_entrypoint: str = \"AgentsSDK/business_ai_hq.py\",\n         streamlit_port: int = 8501,\n     ) -> dict[str, Any]:\n         state = self._create_restart_state(workflow_id, hq_entrypoint, streamlit_port)\n@@ -289,6 +290,12 @@ class BusinessAIRuntime:\n             state[\"restore_result\"] = restore_result\n             state[\"status\"] = \"failed\"\n             state[\"failure_reason\"] = str(exc)\n+            state[\"runtime_monitor\"] = {\n+                \"visible_reason\": str(exc),\n+                \"stage\": state.get(\"stage\", \"\"),\n+                \"validation_result\": state.get(\"validation_result\", {}),\n+                \"start_result\": state.get(\"start_result\", {}),\n+            }\n             state[\"completed_at\"] = self._now()\n             self._save_runtime_state(workflow_id, state)\n             raise\n@@ -757,16 +764,33 @@ print(json.dumps({\"pid\": None, \"creation_time\": \"\", \"command\": \"\", \"working_dire\n         if not entrypoint.exists():\n             raise FileNotFoundError(f\"실행 파일을 찾을 수 없습니다: {entrypoint}\")\n         cmd = [sys.executable, \"-m\", \"streamlit\", \"run\", str(entrypoint), \"--server.port\", str(streamlit_port), \"--server.address\", \"127.0.0.1\"]\n-        proc = subprocess.Popen(cmd, cwd=REPO_ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=getattr(subprocess, \"CREATE_NEW_PROCESS_GROUP\", 0))\n+        proc = subprocess.Popen(cmd, cwd=entrypoint.parent, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=getattr(subprocess, \"CREATE_NEW_PROCESS_GROUP\", 0))\n         time.sleep(8)\n-        return {\"started\": True, \"pid\": proc.pid, \"command\": cmd, \"entrypoint\": str(entrypoint)}\n+        return {\"started\": True, \"pid\": proc.pid, \"command\": cmd, \"entrypoint\": str(entrypoint), \"working_directory\": str(entrypoint.parent)}\n \n     def _validate_business_ai_hq(self, hq_entrypoint: str, streamlit_port: int) -> dict[str, Any]:\n         entrypoint = (REPO_ROOT / hq_entrypoint).resolve()\n         compile_result = subprocess.run([sys.executable, \"-m\", \"py_compile\", str(entrypoint)], cwd=REPO_ROOT, capture_output=True, text=True, encoding=\"utf-8\", errors=\"replace\", timeout=60, check=False)\n         if compile_result.returncode != 0:\n             return {\"passed\": False, \"reason\": compile_result.stderr.strip() or compile_result.stdout.strip() or \"py_compile 실패\"}\n-        return {\"passed\": True, \"reason\": \"business_ai_hq.py py_compile OK\", \"port\": streamlit_port}\n+\n+        if not self._check_local_port(\"127.0.0.1\", streamlit_port, timeout=20):\n+            return {\n+                \"passed\": False,\n+                \"reason\": f\"127.0.0.1:{streamlit_port} 접속 확인에 실패했습니다.\",\n+                \"port\": streamlit_port,\n+            }\n+        return {\"passed\": True, \"reason\": \"business_ai_hq.py py_compile OK 및 Streamlit 접속 확인 완료\", \"port\": streamlit_port}\n+\n+    def _check_local_port(self, host: str, port: int, *, timeout: int = 10) -> bool:\n+        deadline = time.time() + timeout\n+        while time.time() < deadline:\n+            try:\n+                with socket.create_connection((host, port), timeout=2):\n+                    return True\n+            except OSError:\n+                time.sleep(1)\n+        return False\n \n     def _stop_process_tree(self, pid: int) -> dict[str, Any]:\n         script = f\"\"\"\n@@ -804,9 +828,15 @@ except Exception as exc:\n             return {\"restored\": False, \"reason\": \"no_previous_process\"}\n         return self._stop_process_tree(int(pid))\n \n+    def _atomic_write_json(self, path: Path, data: dict[str, Any]) -> None:\n+        path.parent.mkdir(parents=True, exist_ok=True)\n+        tmp_path = path.with_suffix(path.suffix + f\".{uuid.uuid4().hex}.tmp\")\n+        tmp_path.write_text(json.dumps(data, ensure_ascii=False, indent=2, default=str), encoding=\"utf-8\")\n+        os.replace(tmp_path, path)\n+\n     def _save_runtime_state(self, workflow_id: str, state: dict[str, Any]) -> None:\n         path = RUNTIME_STATE_DIR / f\"{workflow_id}.json\"\n-        path.write_text(json.dumps(state, ensure_ascii=False, indent=2, default=str), encoding=\"utf-8\")\n+        self._atomic_write_json(path, state)\n \n     def _load_runtime_state(self, workflow_id: str) -> dict[str, Any] | None:\n         path = RUNTIME_STATE_DIR / f\"{workflow_id}.json\"\n",
+      "git_commit": "b3813940248a2a61ba092d13189c9387f8d9a85c",
+      "git_commit_output": "[ai-ceo-dev b381394] AI CEO: Runtime 자동 재시작 오류를 수정하라. 오류 원인: business_ai_hq.py의 실제 위치는 C:\\BusinessAIO\n 1 file changed, 36 insertions(+), 6 deletions(-)\n",
+      "pending_push": true,
+      "preexisting_changes": [
+        "?? AgentsSDK/business_ai_hq.py",
+        "?? AgentsSDK/company_assets/bootstrap_runs/",
+        "?? AgentsSDK/company_assets/development_runs/",
+        "?? AgentsSDK/company_assets/runtime_routes/"
+      ],
+      "trace_file": "C:\\BusinessAIOS\\AgentsSDK\\company_assets\\development_runs\\wf_5bf0cacf53ef4477.trace.log",
+      "created_at": "2026-07-12T23:11:55.502428+00:00"
+    }
+  }
+}

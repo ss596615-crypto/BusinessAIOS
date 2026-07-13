@@ -167,7 +167,6 @@ class WorkflowManager:
         "manager_assignment",
         "worker_assignment",
         "execution",
-        "development_execution",
         "manager_review",
         "ceo_review",
         "approval_request",
@@ -312,26 +311,14 @@ class WorkflowManager:
         for worker_agent_id in cleaned_worker_ids:
             self._validate_agent_exists(worker_agent_id)
 
-        development_mode = self._is_development_instruction(
-            cleaned_instruction,
-            metadata=metadata,
-        )
-
         workflow_steps = (
             self._prepare_custom_steps(steps)
             if steps is not None
-            else (
-                self._build_development_steps(
-                    ceo_agent_id=ceo_agent_id,
-                    requires_approval=requires_approval,
-                )
-                if development_mode
-                else self._build_default_steps(
-                    ceo_agent_id=ceo_agent_id,
-                    manager_agent_id=cleaned_manager_id,
-                    worker_agent_ids=cleaned_worker_ids,
-                    requires_approval=requires_approval,
-                )
+            else self._build_default_steps(
+                ceo_agent_id=ceo_agent_id,
+                manager_agent_id=cleaned_manager_id,
+                worker_agent_ids=cleaned_worker_ids,
+                requires_approval=requires_approval,
             )
         )
 
@@ -369,10 +356,6 @@ class WorkflowManager:
             ],
             metadata={
                 **dict(metadata or {}),
-                "execution_engine": (
-                    "development_engine" if development_mode else "standard_worker"
-                ),
-                "development_mode": development_mode,
                 "evidence_required": bool(
                     dict(metadata or {}).get("evidence_required")
                     or any(token in cleaned_instruction.lower() for token in (
@@ -514,88 +497,6 @@ class WorkflowManager:
         )
 
         return steps
-
-    def _build_development_steps(
-        self,
-        *,
-        ceo_agent_id: str,
-        requires_approval: bool,
-    ) -> list[WorkflowStep]:
-        """개발 지시 전용 실행 흐름. 일반 지점장/Worker 실행을 우회한다."""
-        now = self._utc_now()
-        steps = [
-            self._make_step(
-                name="대표 개발 지시 접수",
-                step_type="owner_intake",
-                assigned_agent_id=ceo_agent_id,
-                now=now,
-            ),
-            self._make_step(
-                name="AI CEO 개발 업무 판정",
-                step_type="ceo_analysis",
-                assigned_agent_id=ceo_agent_id,
-                now=now,
-            ),
-            self._make_step(
-                name="Development Engine 실제 실행",
-                step_type="development_execution",
-                assigned_agent_id="development_engine",
-                now=now,
-                input_data={"execution_engine": "development_engine"},
-            ),
-            self._make_step(
-                name="AI CEO 개발 결과 검토",
-                step_type="ceo_review",
-                assigned_agent_id=ceo_agent_id,
-                now=now,
-            ),
-        ]
-        if requires_approval:
-            steps.append(
-                self._make_step(
-                    name="대표 Git Push 승인 요청",
-                    step_type="approval_request",
-                    assigned_agent_id=ceo_agent_id,
-                    now=now,
-                )
-            )
-        steps.extend([
-            self._make_step(
-                name="회사 Memory 업데이트",
-                step_type="memory_update",
-                assigned_agent_id=ceo_agent_id,
-                now=now,
-            ),
-            self._make_step(
-                name="다음 업무 결정",
-                step_type="next_action",
-                assigned_agent_id=ceo_agent_id,
-                now=now,
-            ),
-        ])
-        return steps
-
-    @staticmethod
-    def _is_development_instruction(
-        instruction: str,
-        *,
-        metadata: dict[str, Any] | None = None,
-    ) -> bool:
-        meta = dict(metadata or {})
-        if meta.get("development_mode") is True:
-            return True
-        business_type = str(meta.get("business_type") or "").lower()
-        if any(token in business_type for token in (
-            "develop", "devops", "code", "admin_system", "admin_dashboard"
-        )):
-            return True
-        text = str(instruction or "").lower()
-        keywords = (
-            "오류 수정", "버그 수정", "코드 수정", "기능 추가", "기능 수정",
-            "새 기능", "python", "git commit", "git push", "development engine",
-            "dashboard", "workflow", "실제 파일", "함수", "클래스",
-        )
-        return any(keyword in text for keyword in keywords)
 
     def _prepare_custom_steps(
         self,
@@ -1209,6 +1110,40 @@ class WorkflowManager:
         })
         return {"reopened": True, "workflow": self.require_workflow(workflow_id)}
 
+    def finalize_if_all_steps_complete(self, workflow_id: str) -> dict[str, Any]:
+        """모든 단계가 끝났는데 running으로 남은 Workflow를 증거 기준으로 최종 판정한다."""
+        workflow = self.require_workflow(workflow_id)
+        status = str(workflow.get("status") or "")
+        if status in self.TERMINAL_WORKFLOW_STATUSES:
+            return {
+                "finalized": False,
+                "reason": "workflow_already_terminal",
+                "workflow": workflow,
+            }
+
+        steps = list(workflow.get("steps") or [])
+        if not steps:
+            return {
+                "finalized": False,
+                "reason": "workflow_has_no_steps",
+                "workflow": workflow,
+            }
+
+        all_done = all(
+            str(step.get("status") or "") in {"completed", "skipped"}
+            for step in steps
+        )
+        if not all_done:
+            return {
+                "finalized": False,
+                "reason": "remaining_steps_exist",
+                "workflow": workflow,
+            }
+
+        result = self._complete_workflow(workflow_id)
+        result["finalized"] = True
+        return result
+
     def verify_workflow(self, workflow_id: str) -> dict[str, Any]:
         """기존 Workflow를 검증하고 증거가 부족하면 completed를 취소한다."""
         evaluation = self.evaluate_completion_evidence(workflow_id)
@@ -1269,6 +1204,8 @@ class WorkflowManager:
         auto_resume: bool = True,
     ) -> dict[str, Any]:
         workflow = self.require_workflow(workflow_id)
+        approval_note = str(approval_note or "").strip() or "대표 승인"
+        approved_by = str(approved_by or "").strip() or "owner"
 
         if not workflow.get("requires_approval"):
             raise WorkflowStateError(
@@ -1316,33 +1253,13 @@ class WorkflowManager:
 
         self._move_to_next_step(workflow_id)
 
-        # 개발 Workflow는 대표 승인 후에만 ai-ceo-dev 브랜치로 push한다.
-        push_result = None
-        try:
-            from development_engine import development_engine
-            push_result = development_engine.push_after_approval(workflow_id)
-        except Exception as exc:
-            self._set_workflow_fields(
-                workflow_id,
-                {
-                    "status": "failed",
-                    "failure_reason": f"대표 승인 후 Git push 실패: {exc}",
-                    "next_action": "GitHub 인증과 ai-ceo-dev 브랜치를 확인한 뒤 재실행하십시오.",
-                    "updated_at": self._utc_now(),
-                },
-            )
-            return {
-                "approved": True,
-                "push_result": {"pushed": False, "error": str(exc)},
-                "workflow": self.require_workflow(workflow_id),
-            }
-
         if auto_resume:
-            resumed = self.run_workflow(workflow_id)
+            run_result = self.run_workflow(workflow_id)
+            self.finalize_if_all_steps_complete(workflow_id)
             return {
                 "approved": True,
-                "push_result": push_result,
-                "workflow": resumed["workflow"],
+                "run_result": run_result,
+                "workflow": self.require_workflow(workflow_id),
             }
 
         self._set_workflow_status(
@@ -1761,10 +1678,6 @@ class WorkflowManager:
             self._handle_execution,
         )
         self.register_step_handler(
-            "development_execution",
-            self._handle_development_execution,
-        )
-        self.register_step_handler(
             "manager_review",
             self._handle_manager_review,
         )
@@ -2082,27 +1995,9 @@ class WorkflowManager:
             step=step,
         )
 
-        execution_status = str(execution_result.get("status") or "").strip()
-        if execution_status not in {"completed", "waiting_permission"}:
-            raise WorkflowExecutionError(
-                execution_result.get("error")
-                or execution_result.get("failure_reason")
-                or f"Worker 실제 실행 실패: {execution_status or 'unknown'}"
-            )
-
-        development_evidence = execution_result.get("development_evidence") or {}
-        if development_evidence:
-            metadata = dict(workflow.get("metadata") or {})
-            metadata["development_evidence"] = development_evidence
-            metadata["evidence_required"] = True
-            self._set_workflow_fields(
-                str(workflow["workflow_id"]),
-                {"metadata": metadata, "updated_at": self._utc_now()},
-            )
-
         return {
             "execution_completed": (
-                execution_status == "completed"
+                execution_result.get("status") == "completed"
             ),
             "execution_status": execution_result.get("status"),
             "assigned_agent_id": assigned_agent_id,
@@ -2116,56 +2011,6 @@ class WorkflowManager:
             ),
             "next_action": execution_result.get("next_action", ""),
             "limitations": execution_result.get("limitations", []),
-            "development_evidence": development_evidence,
-        }
-
-    def _handle_development_execution(
-        self,
-        workflow: dict[str, Any],
-        step: dict[str, Any],
-    ) -> dict[str, Any]:
-        """개발 Workflow를 일반 Worker가 아닌 Development Engine으로 직접 실행한다."""
-        from development_engine import development_engine
-
-        workflow_id = str(workflow.get("workflow_id") or "")
-        result = development_engine.execute(
-            workflow=workflow,
-            worker_agent_id="development_engine",
-        )
-        evidence = dict(result.get("development_evidence") or {})
-        metadata = dict(workflow.get("metadata") or {})
-        metadata["development_evidence"] = evidence
-        metadata["evidence"] = {
-            "artifact_files": list(result.get("saved_files") or []),
-            "worker_result_files": [
-                str(development_engine.state_file_for(workflow_id))
-            ],
-            "test_passed": bool((evidence.get("tests") or {}).get("passed")),
-            "test_output": str((evidence.get("tests") or {}).get("output") or ""),
-            "git_diff": str(evidence.get("git_diff") or ""),
-            "git_commit": str(evidence.get("git_commit") or ""),
-        }
-        self._set_workflow_fields(
-            workflow_id,
-            {
-                "worker_agent_ids": ["development_engine"],
-                "result_summary": str(result.get("result_summary") or result.get("work_summary") or ""),
-                "next_action": str(result.get("next_action") or "대표 승인 후 Git push"),
-                "metadata": metadata,
-                "updated_at": self._utc_now(),
-            },
-        )
-        return {
-            "execution_completed": result.get("status") == "completed",
-            "execution_status": result.get("status"),
-            "assigned_agent_id": "development_engine",
-            "work_summary": result.get("work_summary"),
-            "result_summary": result.get("result_summary"),
-            "saved_files": result.get("saved_files", []),
-            "permission_requests": result.get("permission_requests", []),
-            "next_action": result.get("next_action", ""),
-            "limitations": result.get("limitations", []),
-            "development_evidence": evidence,
         }
 
     def _handle_manager_review(
