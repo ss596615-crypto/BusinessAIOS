@@ -619,10 +619,7 @@ Workflow ID: {workflow_id}
 
         normalized_status = result.status.strip().lower()
 
-        if normalized_status not in {
-            "completed",
-            "waiting_permission",
-        }:
+        if normalized_status not in {"completed", "waiting_permission"}:
             raise WorkerExecutionError(
                 f"지원하지 않는 직원 실행 상태입니다: {result.status}"
             )
@@ -946,26 +943,5 @@ worker_controller = WorkerController()
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        print("=" * 60)
         print("Worker Controller V2.8")
-        print("Tool Selection Engine 기반 실행 엔진")
-        print(
-            "사용법: py worker_controller.py "
-            "<workflow_id> <worker_agent_id>"
-        )
-        print("=" * 60)
-        raise SystemExit(0)
-
-    result = worker_controller.execute(
-        workflow_id=sys.argv[1],
-        worker_agent_id=sys.argv[2],
-    )
-
-    print(
-        json.dumps(
-            result,
-            ensure_ascii=False,
-            indent=2,
-            default=str,
-        )
-    )
+        raise SystemExit(1)
