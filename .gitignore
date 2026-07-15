@@ -45,4 +45,5 @@ token*
 
 .devengine_backups/
 development_evidence/
-.env
+.envAgentsSDK/company_assets/tools.json
+AgentsSDK/generated_tools/
