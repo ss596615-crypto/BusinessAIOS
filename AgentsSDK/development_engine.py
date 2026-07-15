@@ -170,7 +170,7 @@ class DevelopmentEngine:
             branch = self._current_branch()
 
         fetch_result = self._git(["fetch", "origin", "ai-ceo-dev"], check=False)
-        preexisting_changes = self._git(["status", "--porcelain"], check=False)["stdout"].splitlines()
+        preexisting_changes = self._collect_git_changes()
 
         self._write_trace(workflow_id, "git_preflight", "passed", f"branch={branch}; dirty_entries={len(preexisting_changes)}")
 
@@ -236,68 +236,20 @@ class DevelopmentEngine:
                     + test_result["output"][-4000:]
                 )
 
-            diff = self._git(["diff", "--", *changed_files], check=False)["stdout"]
+            git_changes = self._collect_git_changes()
+            tracked_changed_files = [item["path"] for item in git_changes if item["change_type"] in {"modified", "created", "deleted", "renamed"}]
+            if not tracked_changed_files:
+                raise DevelopmentEngineError("실제 Git 변경사항이 생성되지 않았습니다.")
 
-            if not diff.strip():
-                no_change_result = {
-                    "workflow_id": workflow_id,
-                    "worker_agent_id": worker_agent_id,
-                    "status": "completed",
-                    "work_summary": (
-                        "전체 코드 검증과 자동 테스트를 완료했으며, "
-                        "기존 구현이 대표 지시 기준을 이미 충족하여 "
-                        "추가 Git 변경사항은 생성하지 않았습니다."
-                    ),
-                    "result_summary": plan.summary,
-                    "saved_files": [],
-                    "permission_requests": [],
-                    "next_action": "AI CEO 최종 검토 및 운영보고",
-                    "limitations": plan.limitations,
-                    "development_evidence": {
-                        "engine_version": "v2.3",
-                        "branch": branch,
-                        "git_fetch": (
-                            fetch_result["stdout"]
-                            + fetch_result["stderr"]
-                        ),
-                        "candidate_files": candidates,
-                        "changed_files": [],
-                        "planned_files": changed_files,
-                        "backup_dir": str(backup_dir),
-                        "tests": test_result,
-                        "git_diff": "",
-                        "git_commit": "",
-                        "pending_push": False,
-                        "no_changes_required": True,
-                        "preexisting_changes": preexisting_changes,
-                        "trace_file": str(
-                            DEV_STATE_DIR / f"{workflow_id}.trace.log"
-                        ),
-                        "created_at": self._now(),
-                    },
-                }
-
-                state_file.write_text(
-                    json.dumps(
-                        no_change_result,
-                        ensure_ascii=False,
-                        indent=2,
-                    ),
-                    encoding="utf-8",
-                )
-                self._write_trace(
-                    workflow_id,
-                    "development_engine",
-                    "completed_no_changes",
-                    plan.summary,
-                )
-                return no_change_result
+            diff = self._git(["diff", "--", *tracked_changed_files], check=False)["stdout"]
+            status_short = self._git(["status", "--short"], check=False)["stdout"]
+            status_entries = status_short.splitlines()
 
             self._git(["reset"], check=False)
-            self._git(["add", "--", *changed_files])
+            self._git(["add", "--", *tracked_changed_files])
 
             commit_message = f"AI CEO: {self._short_title(instruction)}"
-            commit_result = self._git(["commit", "-m", commit_message, "--", *changed_files])
+            commit_result = self._git(["commit", "-m", commit_message, "--", *tracked_changed_files])
 
             commit_hash = self._git(["rev-parse", "HEAD"])["stdout"].strip()
 
@@ -312,7 +264,7 @@ class DevelopmentEngine:
                     "Git 작업공간 상태 점검, 백업, 자동 테스트, Git Commit을 완료했습니다."
                 ),
                 "result_summary": plan.summary,
-                "saved_files": changed_files,
+                "saved_files": tracked_changed_files,
                 "permission_requests": [
                     {
                         "service": "GitHub",
@@ -332,7 +284,9 @@ class DevelopmentEngine:
                 "branch": branch,
                 "git_fetch": (fetch_result["stdout"] + fetch_result["stderr"]),
                 "candidate_files": candidates,
-                "changed_files": changed_files,
+                "changed_files": tracked_changed_files,
+                "planned_files": changed_files,
+                "git_status_short": status_entries,
                 "backup_dir": str(backup_dir),
                 "tests": test_result,
                 "git_diff": diff,
@@ -779,10 +733,48 @@ Python 변경이면 tests에 최소한 py_compile 검증 명령을 포함하라.
         if skipped:
             outputs.append("[SKIPPED]\n" + "\n".join(skipped))
 
+        document_files = [
+            file
+            for file in changed_files
+            if file.lower().endswith((".md", ".txt", ".json", ".yaml", ".yml", ".html", ".htm"))
+        ]
+
+        document_validation_passed = True
+        document_validation_output: list[str] = []
+
+        for rel in document_files:
+            path = self.repo_root / rel
+            if not path.exists():
+                document_validation_passed = False
+                document_validation_output.append(
+                    f"[FAILED] 문서 파일 없음: {rel}"
+                )
+                continue
+
+            try:
+                text = path.read_text(encoding="utf-8")
+            except Exception as exc:
+                document_validation_passed = False
+                document_validation_output.append(
+                    f"[FAILED] 문서 읽기 실패: {rel}: {exc}"
+                )
+                continue
+
+            if not text.strip():
+                document_validation_passed = False
+                document_validation_output.append(
+                    f"[FAILED] 빈 문서: {rel}"
+                )
+            else:
+                document_validation_output.append(f"[PASSED] 문서 검증: {rel}")
+
+        if document_validation_output:
+            outputs.append("\n".join(document_validation_output))
+
         required_test_executed = bool(commands)
 
         return {
-            "passed": all_passed and required_test_executed,
+            "passed": all_passed and document_validation_passed and required_test_executed,
             "commands": [" ".join(command) for command in commands],
             "skipped": skipped,
             "pytest_available": pytest_available,
@@ -795,15 +787,8 @@ Python 변경이면 tests에 최소한 py_compile 검증 명령을 포함하라.
 
     def _ensure_clean_worktree(self) -> None:
         status = self._git(["status", "--porcelain"], check=False)
-
-        if status["returncode"] != 0:
-            raise DevelopmentEngineError(
-                "Git 작업 폴더 상태를 확인할 수 없습니다.\n"
-                + (status.get("stdout") or "")
-                + (status.get("stderr") or "")
-            )
-
-        return None
+        if status["stdout"].strip():
+            raise DevelopmentEngineError("작업 폴더에 커밋되지 않은 변경사항이 있습니다.")
 
     def _current_branch(self) -> str:
         return self._git(["branch", "--show-current"])["stdout"].strip()
@@ -813,6 +798,60 @@ Python 변경이면 tests에 최소한 py_compile 검증 명령을 포함하라.
 
     def _has_staged_changes(self) -> bool:
         return bool(self._git(["diff", "--cached", "--name-only"], check=False)["stdout"].strip())
+
+    def _collect_git_changes(self) -> list[dict[str, str]]:
+        diff_name_status = self._git(["diff", "--name-status"], check=False)["stdout"].splitlines()
+        status_short = self._git(["status", "--short"], check=False)["stdout"].splitlines()
+
+        changes: dict[str, dict[str, str]] = {}
+
+        for line in diff_name_status:
+            if not line.strip():
+                continue
+            parts = line.split("\t")
+            change_type = parts[0].strip()
+            path = parts[-1].strip()
+            changes[path] = {"path": path, "change_type": self._normalize_git_change_type(change_type)}
+
+        for line in status_short:
+            if not line.strip():
+                continue
+            code = line[:2]
+            path = line[3:].strip()
+            if "->" in path:
+                path = path.split("->", 1)[-1].strip()
+            change_type = self._status_code_to_change_type(code)
+            if path not in changes or changes[path]["change_type"] == "modified":
+                changes[path] = {"path": path, "change_type": change_type}
+
+        return sorted(changes.values(), key=lambda item: item["path"])
+
+    @staticmethod
+    def _normalize_git_change_type(change_type: str) -> str:
+        mapping = {
+            "A": "created",
+            "M": "modified",
+            "D": "deleted",
+            "R": "renamed",
+            "C": "copied",
+            "U": "unmerged",
+        }
+        return mapping.get(change_type[:1].upper(), "modified")
+
+    @staticmethod
+    def _status_code_to_change_type(code: str) -> str:
+        code = code or "  "
+        if code[0] == "?" or code[1] == "?":
+            return "created"
+        if code[0] == "A" or code[1] == "A":
+            return "created"
+        if code[0] == "D" or code[1] == "D":
+            return "deleted"
+        if code[0] == "R" or code[1] == "R":
+            return "renamed"
+        if code[0] == "C" or code[1] == "C":
+            return "copied"
+        return "modified"
 
     def _git(self, args: list[str], check: bool = True) -> dict[str, Any]:
         proc = subprocess.run(
