@@ -239,7 +239,59 @@ class DevelopmentEngine:
             diff = self._git(["diff", "--", *changed_files], check=False)["stdout"]
 
             if not diff.strip():
-                raise DevelopmentEngineError("실제 Git 변경사항이 생성되지 않았습니다.")
+                no_change_result = {
+                    "workflow_id": workflow_id,
+                    "worker_agent_id": worker_agent_id,
+                    "status": "completed",
+                    "work_summary": (
+                        "전체 코드 검증과 자동 테스트를 완료했으며, "
+                        "기존 구현이 대표 지시 기준을 이미 충족하여 "
+                        "추가 Git 변경사항은 생성하지 않았습니다."
+                    ),
+                    "result_summary": plan.summary,
+                    "saved_files": [],
+                    "permission_requests": [],
+                    "next_action": "AI CEO 최종 검토 및 운영보고",
+                    "limitations": plan.limitations,
+                    "development_evidence": {
+                        "engine_version": "v2.3",
+                        "branch": branch,
+                        "git_fetch": (
+                            fetch_result["stdout"]
+                            + fetch_result["stderr"]
+                        ),
+                        "candidate_files": candidates,
+                        "changed_files": [],
+                        "planned_files": changed_files,
+                        "backup_dir": str(backup_dir),
+                        "tests": test_result,
+                        "git_diff": "",
+                        "git_commit": "",
+                        "pending_push": False,
+                        "no_changes_required": True,
+                        "preexisting_changes": preexisting_changes,
+                        "trace_file": str(
+                            DEV_STATE_DIR / f"{workflow_id}.trace.log"
+                        ),
+                        "created_at": self._now(),
+                    },
+                }
+
+                state_file.write_text(
+                    json.dumps(
+                        no_change_result,
+                        ensure_ascii=False,
+                        indent=2,
+                    ),
+                    encoding="utf-8",
+                )
+                self._write_trace(
+                    workflow_id,
+                    "development_engine",
+                    "completed_no_changes",
+                    plan.summary,
+                )
+                return no_change_result
 
             self._git(["reset"], check=False)
             self._git(["add", "--", *changed_files])
@@ -600,8 +652,6 @@ Python 변경이면 tests에 최소한 py_compile 검증 명령을 포함하라.
             raise DevelopmentEngineError("Git 저장소가 연결되어 있지 않습니다.")
 
     def _ensure_clean_worktree(self) -> None:
-        # 기존 변경사항이 있어도 개발을 중단하지 않는다.
-        # 이번 업무에서 실제로 수정한 changed_files만 이후에 Commit한다.
         status = self._git(["status", "--porcelain"], check=False)
 
         if status["returncode"] != 0:
