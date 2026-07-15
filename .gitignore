@@ -1,8 +1,8 @@
-# 환경변수와 API 키
+﻿# ?섍꼍蹂?섏? API ??
 .env
 .env.*
 
-# Google OAuth 인증 파일
+# Google OAuth ?몄쬆 ?뚯씪
 credentials.json
 **/credentials.json
 client_secret*.json
@@ -12,26 +12,26 @@ token*.json
 *.pickle
 **/*.pickle
 
-# Python 임시 파일
+# Python ?꾩떆 ?뚯씪
 __pycache__/
 **/__pycache__/
 *.pyc
 
-# 로컬 백업과 로그
+# 濡쒖뺄 諛깆뾽怨?濡쒓렇
 backup/
-백업/
+諛깆뾽/
 08_Logs/
 *.log
 
-# 압축·백업 파일
+# ?뺤텞쨌諛깆뾽 ?뚯씪
 *.zip
 BusinessAIOS.zip
 backup/
-백업/
+諛깆뾽/
 *_old.py
 *.old.py
 
-# 모든 인증정보
+# 紐⑤뱺 ?몄쬆?뺣낫
 .env
 .env.*
 credentials.json
@@ -45,5 +45,8 @@ token*
 
 .devengine_backups/
 development_evidence/
-.envAgentsSDK/company_assets/tools.json
+.env
+AgentsSDK/company_assets/tools.json
 AgentsSDK/generated_tools/
+
+백업/
