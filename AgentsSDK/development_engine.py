@@ -182,10 +182,41 @@ class DevelopmentEngine:
         context = self._build_code_context(candidates)
         plan = self._create_plan(workflow, context)
 
-        self._write_trace(workflow_id, "plan", "passed", plan.summary)
+        if not plan.changes and candidates:
+            primary_candidate = candidates[0]
+            fallback_context = (
+                context
+                + "\n\n===== REQUIRED TARGET FILE =====\n"
+                + primary_candidate
+                + "\n이 파일을 우선 수정 대상으로 사용하라. "
+                + "반드시 changes에 최소 1개의 FileChange를 반환하라. "
+                + "대표 지시를 충족하도록 기존 구조를 보강하라.\n"
+            )
+
+            self._write_trace(
+                workflow_id,
+                "plan_fallback",
+                "started",
+                primary_candidate,
+            )
+
+            plan = self._create_plan(
+                workflow,
+                fallback_context,
+            )
+
+        self._write_trace(
+            workflow_id,
+            "plan",
+            "passed" if plan.changes else "failed",
+            plan.summary,
+        )
 
         if not plan.changes:
-            raise DevelopmentEngineError("AI 개발자가 수정 파일을 결정하지 못했습니다.")
+            raise DevelopmentEngineError(
+                "AI 개발자가 수정 파일을 결정하지 못했습니다. "
+                "후보 파일 자동 지정 후 재시도했지만 변경 계획이 비어 있습니다."
+            )
 
         self._validate_plan(plan)
         backup_dir = self._backup_files(workflow_id, plan.changes)
