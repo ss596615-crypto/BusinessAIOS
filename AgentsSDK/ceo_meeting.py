@@ -88,20 +88,69 @@ def refresh_workflows() -> list[dict[str, Any]]:
         return []
 
 
+def _pick_first_text(*values: Any, default: str = "-") -> str:
+    for value in values:
+        if isinstance(value, str) and value.strip() and value.strip().lower() != "none":
+            return value.strip()
+    return default
+
+
+def _get_workflow_business_type(workflow: dict[str, Any] | None, progress: dict[str, Any] | None) -> str:
+    workflow = workflow or {}
+    progress = progress or {}
+    metadata = workflow.get("metadata") or {}
+    return _pick_first_text(
+        metadata.get("business_type"),
+        workflow.get("business_type"),
+        progress.get("business_type"),
+        workflow.get("objective"),
+        default="미지정",
+    )
+
+
+def _get_workflow_manager_label(workflow: dict[str, Any] | None, progress: dict[str, Any] | None) -> str:
+    workflow = workflow or {}
+    progress = progress or {}
+    metadata = workflow.get("metadata") or {}
+    manager = metadata.get("manager") or workflow.get("manager") or {}
+    return _pick_first_text(
+        manager.get("name") if isinstance(manager, dict) else None,
+        manager.get("role") if isinstance(manager, dict) else None,
+        workflow.get("manager_agent_id"),
+        progress.get("manager_agent_id"),
+        default="미배정",
+    )
+
+
+def _get_workflow_next_action(workflow: dict[str, Any] | None, progress: dict[str, Any] | None) -> str:
+    workflow = workflow or {}
+    progress = progress or {}
+    metadata = workflow.get("metadata") or {}
+    return _pick_first_text(
+        workflow.get("next_action"),
+        progress.get("next_action"),
+        metadata.get("next_action"),
+        metadata.get("engine_status"),
+        default="결정 중",
+    )
+
+
 def format_ceo_start_report(result: dict[str, Any]) -> str:
     workflow_id = result["workflow_id"]
     workflow = get_workflow_safe(workflow_id) or {}
+    progress = get_progress_safe(workflow_id) or {}
     manager = result.get("manager") or {}
     worker_ids = workflow.get("worker_agent_ids", [])
     lines = [
         "업무를 접수했습니다.",
         f"- Workflow: {workflow_id}",
-        f"- 업무 유형: {result.get('business_type', '-')}",
+        f"- 업무 유형: {_get_workflow_business_type(workflow, progress)}",
         f"- 실행 엔진: {result.get('execution_engine', '-')}",
-        f"- 담당 지점장: {manager.get('role', '-')}",
-        f"- 배정 직원: {len(worker_ids)}명", 
+        f"- 담당 지점장: {_get_workflow_manager_label(workflow, progress)}",
+        f"- 배정 직원: {len(worker_ids)}명",
         f"- 현재 상태: {result.get('status', '-')}",
         f"- 승인 상태: {result.get('approval_status', '-')}",
+        f"- 다음 작업: {_get_workflow_next_action(workflow, progress)}",
     ]
     if result.get("analysis_summary"):
         lines.append(f"- CEO 분석: {result['analysis_summary']}")
@@ -116,13 +165,15 @@ def format_progress_report(workflow_id: str) -> str:
     return "\n".join(
         [
             f"프로젝트: {workflow.get('title', '-')}",
+            f"업무 유형: {_get_workflow_business_type(workflow, progress)}",
+            f"지점장: {_get_workflow_manager_label(workflow, progress)}",
             f"상태: {progress.get('status', '-')}",
             f"승인 상태: {progress.get('approval_status', '-')}",
             f"실행 엔진: {progress.get('execution_engine', '-')}",
             f"진행률: {progress.get('progress_percent', 0)}%",
             f"완료 단계: {progress.get('completed_steps', 0)} / {progress.get('total_steps', 0)}",
             f"결과 요약: {workflow.get('result_summary') or '작성 중'}",
-            f"다음 업무: {workflow.get('next_action') or '결정 중'}",
+            f"다음 업무: {_get_workflow_next_action(workflow, progress)}",
         ]
     )
 
@@ -258,9 +309,11 @@ else:
     with wf_col1:
         st.markdown(f"**프로젝트:** {current_workflow.get('title', '-')} ")
         st.markdown(f"**목표:** {current_workflow.get('objective', '-')}")
-        st.markdown(f"**Workflow ID:** {current_workflow.get('workflow_id', '-')}")
-        st.markdown(f"**지점장:** {current_workflow.get('manager_agent_id') or '-'}")
+        st.markdown(f"**Workflow ID:** {current_workflow.get('workflow_id', '-')}" )
+        st.markdown(f"**업무 유형:** {_get_workflow_business_type(current_workflow, current_progress)}")
+        st.markdown(f"**지점장:** {_get_workflow_manager_label(current_workflow, current_progress)}")
         st.markdown(f"**직원:** {', '.join(current_workflow.get('worker_agent_ids', [])) or '-'}")
+        st.markdown(f"**다음 작업:** {_get_workflow_next_action(current_workflow, current_progress)}")
         evidence = (current_workflow.get("metadata") or {}).get("evidence") or {}
         if evidence:
             st.markdown("**완료 증거**")
@@ -332,7 +385,7 @@ if approve_clicked and current_workflow is not None:
             "AI CEO",
             "대표 승인을 처리했습니다.\n"
             f"- 최종 상태: {final_workflow.get('status', '-')}\n"
-            f"- 승인 상태: {final_workflow.get('approval_status', '-')}",
+            f"- 승인 상태: {final_workflow.get('approval_status', '-')}"
         )
         st.success("승인이 완료되었습니다.")
         st.rerun()
@@ -369,7 +422,7 @@ if report_clicked and current_workflow is not None:
                 f"- 진행률: {progress.get('progress_percent', 0)}%",
                 f"- 완료 단계: {progress.get('completed_steps', 0)} / {progress.get('total_steps', 0)}",
                 f"- 결과 요약: {workflow.get('result_summary') or '작성 중'}",
-                f"- 다음 업무: {workflow.get('next_action') or '결정 중'}",
+                f"- 다음 업무: {_get_workflow_next_action(workflow, progress)}",
             ]
         )
         add_chat("AI CEO", text)
@@ -390,8 +443,10 @@ else:
         with st.expander(f"{title} · {status} · 승인 {approval_status}"):
             st.write("Workflow ID:", workflow_id)
             st.write("목표:", workflow.get("objective", "-"))
-            st.write("지점장:", workflow.get("manager_agent_id") or "-")
+            st.write("업무 유형:", _get_workflow_business_type(workflow, None))
+            st.write("지점장:", _get_workflow_manager_label(workflow, None))
             st.write("직원:", workflow.get("worker_agent_ids", []))
+            st.write("다음 작업:", _get_workflow_next_action(workflow, None))
             if st.button("이 Workflow 선택", key=f"select_{workflow_id}"):
                 st.session_state.current_workflow_id = workflow_id
                 st.rerun()
