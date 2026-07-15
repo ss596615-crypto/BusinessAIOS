@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import importlib.util
 import json
 import os
@@ -52,6 +51,30 @@ class DevelopmentEngine:
     """AI CEO 개발 업무를 실제 로컬 저장소에서 수행하는 실행 엔진."""
 
     DEV_KEYWORDS = (
+        'execution tool core',
+        'tool registry',
+        'tool creation manager',
+        'execution tool',
+        'worker controller',
+        'manager controller',
+        'workflow manager',
+        'business ai hq',
+        'hq',
+        'agent registry',
+        'integration test',
+        '통합 테스트',
+        '통합테스트',
+        '자동테스트',
+        '라우팅',
+        'registry',
+        'tool core',
+        'tool 시스템',
+        'tool 구조',
+        '개발 엔진',
+        '코드 수정',
+        '코드 개선',
+        '구조 개선',
+        '자동화 구조',
         "오류",
         "버그",
         "수정",
@@ -147,7 +170,6 @@ class DevelopmentEngine:
             branch = self._current_branch()
 
         fetch_result = self._git(["fetch", "origin", "ai-ceo-dev"], check=False)
-
         preexisting_changes = self._git(["status", "--porcelain"], check=False)["stdout"].splitlines()
 
         self._write_trace(workflow_id, "git_preflight", "passed", f"branch={branch}; dirty_entries={len(preexisting_changes)}")
@@ -174,7 +196,6 @@ class DevelopmentEngine:
             self._write_trace(workflow_id, "file_modify", "passed", ", ".join(changed_files))
 
             test_result = self._run_tests(requested=plan.tests, changed_files=changed_files)
-
             self._write_trace(workflow_id, "tests", "passed" if test_result["passed"] else "failed", "; ".join(test_result.get("commands") or []))
 
             if not test_result["passed"]:
@@ -548,9 +569,18 @@ Python 변경이면 tests에 최소한 py_compile 검증 명령을 포함하라.
             raise DevelopmentEngineError("Git 저장소가 연결되어 있지 않습니다.")
 
     def _ensure_clean_worktree(self) -> None:
+        # 기존 변경사항이 있어도 개발을 중단하지 않는다.
+        # 이번 업무에서 실제로 수정한 changed_files만 이후에 Commit한다.
         status = self._git(["status", "--porcelain"], check=False)
-        if status["stdout"].strip():
-            raise DevelopmentEngineError("작업 폴더에 커밋되지 않은 변경사항이 있습니다.")
+
+        if status["returncode"] != 0:
+            raise DevelopmentEngineError(
+                "Git 작업 폴더 상태를 확인할 수 없습니다.\n"
+                + (status.get("stdout") or "")
+                + (status.get("stderr") or "")
+            )
+
+        return None
 
     def _current_branch(self) -> str:
         return self._git(["branch", "--show-current"])["stdout"].strip()
