@@ -364,39 +364,119 @@ class BusinessAIRuntime:
 
     def _resolve_registered_worker_id(self, *, workflow: dict[str, Any], route: dict[str, Any]) -> str:
         candidates: list[str] = []
-        route_candidate = str(route.get("worker_agent_id") or "").strip()
-        if route_candidate:
-            candidates.append(route_candidate)
+
+        def add_candidate(value: Any, *, first: bool = False) -> None:
+            candidate = str(value or "").strip()
+            if not candidate:
+                return
+            lowered = candidate.lower()
+            excluded = {
+                "development_engine",
+                "development_engine_v2",
+                "development_engine_v3",
+                "worker_tool_execution",
+                "tool_development_engine",
+                "ceo_001",
+            }
+            if lowered in excluded:
+                return
+            if first:
+                candidates.insert(0, candidate)
+            else:
+                candidates.append(candidate)
+
+        add_candidate(route.get("worker_agent_id"))
+
+        worker_ids = workflow.get("worker_agent_ids")
+        if isinstance(worker_ids, list):
+            for worker_id in worker_ids:
+                add_candidate(worker_id, first=True)
+
         steps = workflow.get("steps") or []
         if isinstance(steps, list):
             for step in steps:
                 if not isinstance(step, dict):
                     continue
-                assigned_id = str(step.get("assigned_agent_id") or "").strip()
+                assigned_id = step.get("assigned_agent_id")
                 step_type = str(step.get("step_type") or "").strip().lower()
-                if assigned_id and step_type in {"worker_execution", "worker_task", "execution", "development"}:
-                    candidates.insert(0, assigned_id)
-                elif assigned_id:
-                    candidates.append(assigned_id)
+                if step_type in {"worker_execution", "worker_task", "execution", "development"}:
+                    add_candidate(assigned_id, first=True)
+                else:
+                    add_candidate(assigned_id)
+
         workers = workflow.get("workers")
         if isinstance(workers, list):
             for worker in workers:
                 if not isinstance(worker, dict):
                     continue
                 for key in ("agent_id", "worker_agent_id", "id"):
-                    value = str(worker.get(key) or "").strip()
+                    value = worker.get(key)
                     if value:
-                        candidates.insert(0, value)
+                        add_candidate(value, first=True)
                         break
+
         seen: set[str] = set()
         for candidate in candidates:
-            if not candidate or candidate in seen:
+            if candidate in seen:
                 continue
             seen.add(candidate)
             agent = worker_controller.registry.get_agent_by_id(candidate)
-            if agent and agent.get("status") == "active":
-                return candidate
-        raise RuntimeError("개발 Workflow에 배정된 실제 Registry 직원 ID를 찾을 수 없습니다. 후보: " + ", ".join(candidates))
+            if not isinstance(agent, dict):
+                continue
+            if str(agent.get("status") or "").lower() != "active":
+                continue
+            level = str(agent.get("level") or "").lower()
+            if level in {"ceo", "manager"}:
+                continue
+            return candidate
+
+        registry_agents = worker_controller.registry.list_agents()
+        if not isinstance(registry_agents, list):
+            registry_agents = []
+
+        active_workers: list[dict[str, Any]] = []
+        for agent in registry_agents:
+            if not isinstance(agent, dict):
+                continue
+            if str(agent.get("status") or "").lower() != "active":
+                continue
+            level = str(agent.get("level") or "").lower()
+            if level in {"ceo", "manager"}:
+                continue
+            agent_id = str(agent.get("agent_id") or "").strip()
+            if not agent_id:
+                continue
+            active_workers.append(agent)
+
+        priority_keywords = (
+            "development",
+            "developer",
+            "software",
+            "frontend",
+            "homepage",
+            "web",
+            "개발",
+            "소프트웨어",
+            "프론트",
+            "홈페이지",
+        )
+
+        for agent in active_workers:
+            haystack = " ".join(
+                str(agent.get(key) or "")
+                for key in ("agent_id", "name", "role", "description", "instructions")
+            ).lower()
+            if any(keyword in haystack for keyword in priority_keywords):
+                return str(agent.get("agent_id"))
+
+        if active_workers:
+            return str(active_workers[0].get("agent_id"))
+
+        raise RuntimeError(
+            "개발 Workflow를 실행할 활성 Registry 직원이 없습니다. "
+            "Workflow 직원 배정 또는 Registry worker 등록이 필요합니다. "
+            f"검사 후보: {', '.join(candidates) or '없음'}"
+        )
 
     @staticmethod
     def _select_worker_agent_id(result: dict[str, Any]) -> str:

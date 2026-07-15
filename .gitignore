@@ -50,3 +50,7 @@ AgentsSDK/company_assets/tools.json
 AgentsSDK/generated_tools/
 
 백업/
+AgentsSDK/company_assets/runtime_routes/
+AgentsSDK/company_assets/tool_creation_requests/
+AgentsSDK/company_assets/tool_executions/
+AgentsSDK/generated_projects/
