@@ -76,7 +76,7 @@ def get_progress_safe(workflow_id: str | None) -> dict[str, Any] | None:
     if not workflow_id:
         return None
     try:
-        return runtime.progress(workflow_id)
+        return workflow_manager.get_workflow_progress(workflow_id)
     except Exception:
         return None
 
@@ -125,12 +125,9 @@ def _get_workflow_manager_label(workflow: dict[str, Any] | None, progress: dict[
 def _get_workflow_next_action(workflow: dict[str, Any] | None, progress: dict[str, Any] | None) -> str:
     workflow = workflow or {}
     progress = progress or {}
-    metadata = workflow.get("metadata") or {}
     return _pick_first_text(
         workflow.get("next_action"),
         progress.get("next_action"),
-        metadata.get("next_action"),
-        metadata.get("engine_status"),
         default="결정 중",
     )
 
@@ -148,8 +145,8 @@ def format_ceo_start_report(result: dict[str, Any]) -> str:
         f"- 실행 엔진: {result.get('execution_engine', '-')}",
         f"- 담당 지점장: {_get_workflow_manager_label(workflow, progress)}",
         f"- 배정 직원: {len(worker_ids)}명",
-        f"- 현재 상태: {result.get('status', '-')}",
-        f"- 승인 상태: {result.get('approval_status', '-')}",
+        f"- 현재 상태: {workflow.get('status', result.get('status', '-'))}",
+        f"- 승인 상태: {workflow.get('approval_status', result.get('approval_status', '-'))}",
         f"- 다음 작업: {_get_workflow_next_action(workflow, progress)}",
     ]
     if result.get("analysis_summary"):
@@ -167,8 +164,8 @@ def format_progress_report(workflow_id: str) -> str:
             f"프로젝트: {workflow.get('title', '-')}",
             f"업무 유형: {_get_workflow_business_type(workflow, progress)}",
             f"지점장: {_get_workflow_manager_label(workflow, progress)}",
-            f"상태: {progress.get('status', '-')}",
-            f"승인 상태: {progress.get('approval_status', '-')}",
+            f"상태: {workflow.get('status', '-')}",
+            f"승인 상태: {workflow.get('approval_status', '-')}",
             f"실행 엔진: {progress.get('execution_engine', '-')}",
             f"진행률: {progress.get('progress_percent', 0)}%",
             f"완료 단계: {progress.get('completed_steps', 0)} / {progress.get('total_steps', 0)}",
@@ -309,7 +306,7 @@ else:
     with wf_col1:
         st.markdown(f"**프로젝트:** {current_workflow.get('title', '-')} ")
         st.markdown(f"**목표:** {current_workflow.get('objective', '-')}")
-        st.markdown(f"**Workflow ID:** {current_workflow.get('workflow_id', '-')}" )
+        st.markdown(f"**Workflow ID:** {current_workflow.get('workflow_id', '-')}")
         st.markdown(f"**업무 유형:** {_get_workflow_business_type(current_workflow, current_progress)}")
         st.markdown(f"**지점장:** {_get_workflow_manager_label(current_workflow, current_progress)}")
         st.markdown(f"**직원:** {', '.join(current_workflow.get('worker_agent_ids', [])) or '-'}")
@@ -323,8 +320,8 @@ else:
     with wf_col2:
         if current_progress:
             st.metric("진행률", f"{current_progress.get('progress_percent', 0)}%")
-            st.write("상태:", current_progress.get("status", "-"))
-            st.write("승인:", current_progress.get("approval_status", "-"))
+            st.write("상태:", current_workflow.get("status", "-"))
+            st.write("승인:", current_workflow.get("approval_status", "-"))
 
 st.divider()
 approval_pending = bool(
@@ -418,11 +415,12 @@ if report_clicked and current_workflow is not None:
                 "AI CEO 운영보고",
                 f"- 프로젝트: {workflow.get('title', '-')}",
                 f"- 목표: {workflow.get('objective', '-')}",
-                f"- 상태: {progress.get('status', '-')}",
+                f"- 상태: {workflow.get('status', '-')}",
+                f"- 승인 상태: {workflow.get('approval_status', '-')}",
+                f"- 엔진 상태: {report.get('engine_status', '-')}",
                 f"- 진행률: {progress.get('progress_percent', 0)}%",
                 f"- 완료 단계: {progress.get('completed_steps', 0)} / {progress.get('total_steps', 0)}",
-                f"- 결과 요약: {workflow.get('result_summary') or '작성 중'}",
-                f"- 다음 업무: {_get_workflow_next_action(workflow, progress)}",
+                f"- 다음 업무: {report.get('next_action', '결정 중')}",
             ]
         )
         add_chat("AI CEO", text)

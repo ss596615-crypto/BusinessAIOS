@@ -1,13 +1,3 @@
-"""
-Business AI OS Runtime V2.5
-
-Tool 중심 통합 Runtime
-- 일반 업무: 기존 AI CEO Workflow 승인
-- 개발 업무: Worker Controller가 Tool Registry를 검색하여 실행
-- Tool 생성 요청: 대표 승인 후 자동 생성·테스트·등록·업무 재개
-- 개발 완료 후 두 번째 대표 승인 시 Git Push
-"""
-
 from __future__ import annotations
 
 import json
@@ -301,36 +291,30 @@ class BusinessAIRuntime:
         return ceo_controller.reject(workflow_id, reason)
 
     def report(self, workflow_id: str) -> dict[str, Any]:
-        base_report = ceo_controller.report(workflow_id)
-        route = self._load_route(workflow_id)
-        if not route:
-            return base_report
-        state_file = development_engine.state_file_for(workflow_id)
-        development_result = None
-        if state_file.exists():
-            development_result = json.loads(state_file.read_text(encoding="utf-8"))
-        tool_request = None
-        request_id = str(route.get("tool_creation_request_id") or "")
-        if request_id:
-            tool_request = tool_creation_manager.get_request(request_id)
+        workflow = workflow_manager.require_workflow(workflow_id)
+        progress = workflow_manager.get_workflow_progress(workflow_id)
+        route = self._load_route(workflow_id) or {}
         return {
             "workflow_id": workflow_id,
+            "workflow": workflow,
+            "progress": progress,
+            "status": workflow.get("status"),
+            "approval_status": workflow.get("approval_status"),
+            "engine_status": route.get("engine_status") or workflow.get("metadata", {}).get("engine_status") or workflow.get("status"),
+            "next_action": workflow.get("next_action") or route.get("next_action") or "결정 중",
             "execution_engine": route.get("execution_engine"),
             "development_mode": route.get("development_mode", False),
-            "engine_status": route.get("engine_status"),
-            "ceo_report": base_report,
-            "tool_creation_request": tool_request,
-            "development_result": development_result,
         }
 
     def progress(self, workflow_id: str) -> dict[str, Any]:
+        workflow = workflow_manager.require_workflow(workflow_id)
         progress = workflow_manager.get_workflow_progress(workflow_id)
-        route = self._load_route(workflow_id)
-        if route:
-            progress["execution_engine"] = route.get("execution_engine")
-            progress["development_mode"] = route.get("development_mode", False)
-            progress["engine_status"] = route.get("engine_status")
-            progress["tool_creation_request_id"] = route.get("tool_creation_request_id", "")
+        route = self._load_route(workflow_id) or {}
+        progress["execution_engine"] = route.get("execution_engine")
+        progress["development_mode"] = route.get("development_mode", False)
+        progress["engine_status"] = route.get("engine_status") or workflow.get("metadata", {}).get("engine_status") or workflow.get("status")
+        progress["tool_creation_request_id"] = route.get("tool_creation_request_id", "")
+        progress["next_action"] = workflow.get("next_action") or route.get("next_action") or "결정 중"
         return progress
 
     def assign_workers(self, workflow_id: str, worker_ids: list[str]) -> dict[str, Any]:
